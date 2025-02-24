@@ -12,8 +12,8 @@ File Encoding         : 65001
 
 Date: 2025-02-23 16:24:46
 */
-CREATE DATABASE bepensa;
-USE bepensa;
+CREATE DATABASE nautica;
+USE nautica;
 
 SET FOREIGN_KEY_CHECKS=0;
 

@@ -62,6 +62,11 @@ Route::get('/', function () {
     return view('login.login');
 });
 
+Route::get('/cobro', function () {
+    return view('Cobro.cobro');
+});
+
+
 // Login
 Route::post('login', [LoginController::class, 'validar']);
 
