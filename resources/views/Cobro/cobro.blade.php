@@ -1,86 +1,67 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistema de Cobro - Bepensa Izamal</title>
-
-  <!-- Ícono de la página -->
-  <link rel="icon" href="https://www.bepensa.com/wp-content/uploads/2018/05/cropped32x32.png" sizes="32x32">
-
-  <!-- Enlace al CSS de Bootstrap -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
-  <script defer src="script.js"></script>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
-</head>
-<body>
-  <!-- Encabezado -->
-  <header class="bg-primary text-white py-3 text-center">
-    <div class="container d-flex align-items-center justify-content-center">
-       <img src="https://portalproveedores-articulos.bepensa.com/Compras/Estilos/img/Logo_bepensa.png" alt="logo" class="header-logo">
-      <h1>Sistema de Cobro</h1>
-    </div>
-  </header>
-
-  <main class="container my-4">
-    <!-- Formulario para agregar productos -->
-    <section class="mb-4">
-      <h2>Agregar Producto</h2>
-      <form id="add-product-form" class="row g-3">
+@extends('layout.app')
+@section('content')
+<div style="margin: 1rem">
+    <!-- Buscar facturas -->
+    <div class="">
+      <h2 style="text-align: left;">Buscar Facturas</h2>
+      <form id="search-form" class="row g-3" style="gap: 0rem !important;">
         <div class="col-md-4">
-          <input type="text" id="product-code" class="form-control" placeholder="Nota de Venta" required>
+          <label for="invoice-code" class="form-label">Código de factura</label>
+          <input type="text" id="invoice-code" class="form-control" placeholder="Ejemplo: NH186124">
         </div>
         <div class="col-md-4">
-          <input type="text" id="product-name" class="form-control" placeholder="Nombre del Cliente" required>
+          <label for="provider" class="form-label">Proveedor</label>
+          <select class="form-select form-control">
+            <option value="">Seleccionar</option>
+            @foreach (App\Models\Proveedor::all() as $proveedor)
+              <option value="{{ $proveedor->id }}">{{ $proveedor->proveedor }}</option>
+            @endforeach
+          </select>
         </div>
-        <div class="col-md-2">
-          <input type="number" id="product-quantity" class="form-control" placeholder="Cantidad" required>
+        <div class="col-md-4">
+          <label for="client" class="form-label">Cliente</label>
+          <select class="form-select form-control">
+            <option value="">Seleccionar</option>
+          </select>
         </div>
-        <div class="col-md-12">
-          <input type="file" id="product-image" class="form-control">
+        <div class="col-md-4">
+          <label for="start-date" class="form-label">Fecha de inicio</label>
+          <input type="date" id="start-date" class="form-control" required>
         </div>
-        <div class="col-md-12 text-end">
-          <button type="submit" class="btn btn-primary">Agregar</button>
+        <div class="col-md-4">
+          <label for="end-date" class="form-label">Fecha de fin</label>
+          <input type="date" id="end-date" class="form-control" required>
+        </div>
+        
+        <div class="col-md-4 align-self-end">
+          <button type="submit" class="btn btn-primary form-control">Buscar</button>
         </div>
       </form>
-    </section>
+    </div>
 
-    <!-- Tabla de productos -->
-    <section class="mb-4">
+    <!-- Tabla de facturas -->
+    <div class="mb-4">
       <h2>Facturas</h2>
       <table class="table table-striped">
         <thead>
           <tr>
             <th>Código</th>
-            <th>Nombre</th>
-            <th>Cantidad</th>
-            <th>Unidad</th>
-            <th>Marca</th>
-            <th>Descripción</th>
-            <th>Imagen</th>
-            <th>Acción</th>
+            <th>Cliente</th>
+            <th>Fecha</th>
+            <th>Total</th>
+            <th>Pagado</th>
+            <th>Saldo</th>
+            <th>Estado</th>
+            <th>Acciones</th>
           </tr>
         </thead>
-        <tbody id="product-table-body">
+        <tbody id="invoice-table-body">
           <tr>
-            <td colspan="8" class="text-center">No hay productos seleccionados</td>
+            <td colspan="8" class="text-center">No hay facturas registradas</td>
           </tr>
         </tbody>
       </table>
-    </section>
-
-    <!-- Generación de factura -->
-    <section class="mb-4">
-      <h2>Generar Reporte</h2>
-      <button id="generate-invoice" class="btn btn-success">Generar PDF</button>
-    </section>
-  </main>
-
-  <footer class="bg-light text-center py-3">
-    <strong>Copyright &copy; 2025 <a href="https://www.bepensa.com/" target="_blank">Bepensa</a>.</strong> Todos los derechos reservados.
-  </footer>
+    </div>
 
   <script>
     document.getElementById('generate-invoice').addEventListener('click', function () {
@@ -90,5 +71,8 @@
       doc.save("factura.pdf");
     });
   </script>
-</body>
-</html>
+</div>
+@endsection
+@push('scripts')
+@endpush
+

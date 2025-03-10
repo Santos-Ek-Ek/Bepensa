@@ -1,5 +1,6 @@
-var urlProductos = "http://localhost/Bepensa/public/apiProducto";
-var urlCategorias = "http://localhost/Bepensa/public/apiCategoria";
+var route = document.querySelector("[name=url_route]").getAttribute("value");
+var urlProductos =  route + "/apiProducto";
+var urlCategorias = route + "/apiCategoria";
 
 
 

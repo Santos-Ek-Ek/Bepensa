@@ -20,7 +20,7 @@ class LoginController extends Controller
         if(count($coincidencia)>0){
             $sesionActual = $coincidencia[0]->nombre .' '. $coincidencia[0]->apellidos;
             Session::put('usuario', $sesionActual);
-            return Redirect::to('productos');
+            return Redirect::to('cobro');
         }else{
             return Redirect::to('/');
         }

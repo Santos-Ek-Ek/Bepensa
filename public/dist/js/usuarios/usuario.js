@@ -1,4 +1,5 @@
-var urlUsuarios = "http://localhost/Bepensa/public/apiUsuario";
+var route = document.querySelector("[name=url_route]").getAttribute("value");
+var urlUsuarios = route + "/apiUsuario";
 
 new Vue({
 

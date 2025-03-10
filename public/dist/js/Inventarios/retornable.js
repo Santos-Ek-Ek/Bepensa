@@ -1,7 +1,8 @@
-var urlRetornables = "http://localhost/Bepensa/public/apiRetornable";
-var urlCategorias = "http://localhost/Bepensa/public/apiCategoria";
-var urlProductos = "http://localhost/Bepensa/public/apiProductoRetornable";
-var urlTipos="http://localhost/Bepensa/public/apiTipo";
+var route = document.querySelector("[name=url_route]").getAttribute("value");
+var urlRetornables = route + "/apiRetornable";
+var urlCategorias = route + "/apiCategoria";
+var urlProductos = route + "/apiProductoRetornable";
+var urlTipos= route + "/apiTipo";
 
 new Vue({
 

@@ -12,8 +12,8 @@ File Encoding         : 65001
 
 Date: 2025-02-23 16:23:52
 */
-CREATE DATABASE nautica;
-USE nautica;
+CREATE DATABASE sistema_cobro;
+USE sistema_cobro;
 
 SET FOREIGN_KEY_CHECKS=0;
 

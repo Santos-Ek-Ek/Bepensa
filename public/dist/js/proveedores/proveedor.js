@@ -1,4 +1,5 @@
-var urlProveedores = "http://localhost/Bepensa/public/apiProveedor";
+var route = document.querySelector("[name=url_route]").getAttribute("value");
+var urlProveedores = route + "/apiProveedor";
 
 new Vue({
 

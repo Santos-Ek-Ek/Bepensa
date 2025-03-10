@@ -1,6 +1,7 @@
-var urlVacios = "http://localhost/Bepensa/public/apiVacio";
-var urlCategorias = "http://localhost/Bepensa/public/apiCategoria";
-var urlProductos = "http://localhost/Bepensa/public/apiProductoVacio";
+var route = document.querySelector("[name=url_route]").getAttribute("value");
+var urlVacios = route + "/apiVacio";
+var urlCategorias = route + "/apiCategoria";
+var urlProductos = route + "/apiProductoVacio";
 
 new Vue({
 
