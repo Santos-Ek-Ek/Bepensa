@@ -46,7 +46,9 @@
     <div class="card">
       <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
         <h3 class="card-title" style="font-weight: bolder">Lista de Facturas</h3>
-        <button type="button" class="btn btn-primary"  onclick="abrirModal()" style="margin-left: auto;">Agregar Factura</button>
+        <a href="{{ route('nueva-facturacion') }}" class="btn btn-primary" style="margin-left: auto;">
+          Agregar Factura
+        </a>
       </div>
       <div class="card-body">
         <table class="table table-bordered table-striped" id="facturacionDataTable">
@@ -70,23 +72,25 @@
     </div>
 
     <!-- Modal -->
-    <div class="modal fade" id="facturacionModal" tabindex="-1" aria-labelledby="facturacionModalLabel" aria-hidden="true">
-      <div class="modal-dialog">
+    <!-- <div class="modal fade" id="facturacionModal" tabindex="-1" aria-labelledby="facturacionModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
+            <h5 class="modal-title" id="exampleModalLabel">Agregar facturación</h5>
             <button type="button" class="btn-close" onclick="cerrarModal()" aria-label="Close"></button>
           </div>
-          <div class="modal-body">
-            ...
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" onclick="cerrarModal()">Close</button>
-            <button type="button" class="btn btn-primary">Save changes</button>
-          </div>
+          <form action="" style="flex-direction: column;">
+            @csrf
+            <div class="modal-body">
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" onclick="cerrarModal()">Close</button>
+              <button type="button" class="btn btn-primary">Save changes</button>
+            </div>
+          </form>
         </div>
       </div>
-    </div>
+    </div> -->
 
   <script>
     window.onload = function () {

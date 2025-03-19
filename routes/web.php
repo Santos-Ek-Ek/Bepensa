@@ -3,6 +3,8 @@
 use App\Http\Controllers\CategoriaController;
 use App\Http\Controllers\CFDIController;
 use App\Http\Controllers\ClienteController;
+use App\Http\Controllers\CobroController;
+use App\Http\Controllers\FacturacionController;
 use App\Http\Controllers\InventarioRetornableController;
 use App\Http\Controllers\InventarioNoRetornableController;
 use App\Http\Controllers\InventarioVacioController;
@@ -64,9 +66,9 @@ Route::get('/', function () {
     return view('login.login');
 });
 
-Route::get('/cobro', function () {
-    return view('Cobro.cobro');
-});
+// Route::get('/cobro', function () {
+//     return view('Cobro.cobro');
+// });
 
 
 // Login
@@ -107,3 +109,10 @@ Route::get('cfdi', [CFDIController::class, 'index']);
 Route::post('crear-cfdi', [CFDIController::class, 'store'])->name('nuevo-cfdi');
 Route::put('/cfdi/{id}', [CFDIController::class, 'update'])->name('actualizar-cfdi');
 Route::delete('/cfdi/{id}', [CFDIController::class, 'destroy'])->name('eliminar-cfdi');
+
+// vista de cobro
+Route::get('cobro', [CobroController::class, 'index'])->name('cobro');
+
+// vista de facturacion
+Route::get('nueva-facturacion', [FacturacionController::class, 'index'])->name('nueva-facturacion');
+Route::post('crear-facturacion', [FacturacionController::class, 'store'])->name('crear-facturacion');
