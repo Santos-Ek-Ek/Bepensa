@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\CategoriaController;
+use App\Http\Controllers\CFDIController;
+use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\InventarioRetornableController;
 use App\Http\Controllers\InventarioNoRetornableController;
 use App\Http\Controllers\InventarioVacioController;
@@ -93,3 +95,15 @@ Route::resource('apiVacio', InventarioVacioController::class);
 Route::resource('apiCategoria', CategoriaController::class);
 
 Route::resource('apiTipo', TipoController::class);
+
+// vista de clientes
+Route::get('clientes', [ClienteController::class, 'index']);
+Route::post('crear-cliente', [ClienteController::class, 'store'])->name('nuevo-cliente');
+Route::put('/clientes/{id}', [ClienteController::class, 'update'])->name('actualizar-cliente');
+Route::delete('/clientes/{id}', [ClienteController::class, 'destroy'])->name('eliminar-cliente');
+
+// vista de cfdi
+Route::get('cfdi', [CFDIController::class, 'index']);
+Route::post('crear-cfdi', [CFDIController::class, 'store'])->name('nuevo-cfdi');
+Route::put('/cfdi/{id}', [CFDIController::class, 'update'])->name('actualizar-cfdi');
+Route::delete('/cfdi/{id}', [CFDIController::class, 'destroy'])->name('eliminar-cfdi');

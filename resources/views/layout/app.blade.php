@@ -163,9 +163,18 @@
 
                       <ul class="nav nav-treeview">
                         <li class="nav-item">
-                          <a href="{{ url("usuarios") }}" class="nav-link">
+                          <a href="{{ url("clientes") }}" class="nav-link">
                             <i class="fas fa-address-book nav-icon"></i>
                             <p>Clientes</p>
+                          </a>
+                        </li>
+                      </ul>
+
+                      <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                          <a href="{{ url('cfdi') }}" class="nav-link">
+                            <i class="fas fa-file-invoice nav-icon"></i>
+                            <p>CFDI</p>
                           </a>
                         </li>
                       </ul>
