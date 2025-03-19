@@ -26,11 +26,16 @@ class CFDIController extends Controller
      */
     public function store(Request $request)
     {
-        $cfdi = new CFDI();
-        $cfdi->folio = $request->input("folio");
-        $cfdi->nombre = $request->input("nombre");
-        $cfdi->activo = 1;
-        $cfdi->save();
+        $request->validate([
+            'folio' => 'required',
+            'nombre' => 'required'
+        ], [
+            'folio.required' => 'El folio es obligatorio',
+            'nombre.required' => 'El nombre es obligatorio'
+        ]);
+
+        CFDI::create($request->all());
+        return response()->json(['success' => true]);
     }
 
     /**
@@ -53,6 +58,14 @@ class CFDIController extends Controller
      */
     public function update(Request $request, $id)
     {
+        $request->validate([
+            'folio' => 'required',
+            'nombre' => 'required'
+        ], [
+            'folio.required' => 'El folio es obligatorio',
+            'nombre.required' => 'El nombre es obligatorio'
+        ]);
+
         // Buscar el cliente
         $cfdi = CFDI::find($id);
 
@@ -62,7 +75,7 @@ class CFDIController extends Controller
             'nombre' => $request->nombre,
         ]);
                 
-        return redirect()->back()->with('success', 'CFDI actualizado correctamente.');
+        return response()->json(['success' => true]);
     }
 
     /**
