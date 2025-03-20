@@ -17,6 +17,16 @@ class ProductoController extends Controller
         return $productos = Producto::all();
     }
 
+    public function buscar(Request $request)
+    {
+        $query = $request->q;
+        $productos = Producto::where('codigo', 'LIKE', "%$query%")
+                    ->orWhere('nombre', 'LIKE', "%$query%")
+                    ->limit(5)
+                    ->get();
+        return response()->json($productos);
+    }
+
     /**
      * Show the form for creating a new resource.
      *
