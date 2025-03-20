@@ -49,9 +49,6 @@
                     style="display: none; position: absolute; width: 100%; top: 100%; left: 0; z-index: 1000;">
                 </select>
               </div>
-                <!-- <div class="col-md-4 d-flex align-items-end">
-                    <button type="button" class="btn btn-primary" id="agregarProducto">Agregar Producto</button>
-                </div> -->
             </div>
 
             <hr>
@@ -63,11 +60,24 @@
                         <tr>
                             <th>Código</th>
                             <th>Nombre</th>
+                            <th>Precio</th>
+                            <th>Cantidad</th>
+                            <th>Subtotal</th>
                             <th>Acción</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
                 </table>
+            </div>
+
+            <hr>
+
+            <!-- Total de la Facturación -->
+            <div class="row">
+                <div class="col-md-4">
+                    <h4>Total: $ <span id="totalFactura">0.00</span></h4>
+                    <input type="hidden" name="total" id="totalInput">
+                </div>
             </div>
 
             <hr>
@@ -95,21 +105,22 @@
                 .then(data => {
                     sugerencias.innerHTML = "";
                     if (data.length > 0) {
-                        sugerencias.style.display = "block"; // Mostrar el select
+                        sugerencias.style.display = "block"; 
                         data.forEach(producto => {
                             let option = document.createElement("option");
                             option.value = producto.id;
                             option.textContent = `${producto.codigo} - ${producto.nombre}`;
                             option.setAttribute("data-codigo", producto.codigo);
                             option.setAttribute("data-nombre", producto.nombre);
+                            option.setAttribute("data-precio", producto.precio);
                             sugerencias.appendChild(option);
                         });
                     } else {
-                        sugerencias.style.display = "none"; // Ocultar si no hay resultados
+                        sugerencias.style.display = "none"; 
                     }
                 });
         } else {
-            sugerencias.style.display = "none"; // Ocultar si la consulta es muy corta
+            sugerencias.style.display = "none"; 
         }
     });
 
@@ -119,21 +130,34 @@
         let id = selectedOption.value;
         let codigo = selectedOption.getAttribute("data-codigo");
         let nombre = selectedOption.getAttribute("data-nombre");
+        let precio = parseFloat(selectedOption.getAttribute("data-precio"));
 
         if (id) {
-            agregarProducto(id, codigo, nombre);
-            this.style.display = "none"; // Ocultar el select después de seleccionar
+            agregarProducto(id, codigo, nombre, precio);
+            this.style.display = "none";
         }
     });
 
     // Agregar producto a la tabla
-    function agregarProducto(id, codigo, nombre) {
-        if (!productosSeleccionados.includes(id)) {
+    function agregarProducto(id, codigo, nombre, precio) {
+        let cantidadInput = document.querySelector(`input[data-id="${id}"]`);
+        
+        if (cantidadInput) {
+            // Si el producto ya está en la tabla, incrementa la cantidad
+            cantidadInput.value = parseInt(cantidadInput.value) + 1;
+            actualizarSubtotal(id);
+        } else {
+            // Si el producto no está, agrégalo a la tabla
             productosSeleccionados.push(id);
             let fila = `
-                <tr>
+                <tr id="fila-${id}">
                     <td>${codigo}</td>
                     <td>${nombre}</td>
+                    <td>$${precio.toFixed(2)}</td>
+                    <td>
+                        <input type="number" name="cantidades[]" value="1" min="1" class="form-control cantidad" data-id="${id}" data-precio="${precio}" oninput="actualizarSubtotal(${id})">
+                    </td>
+                    <td id="subtotal-${id}">$${precio.toFixed(2)}</td>
                     <td>
                         <button type="button" class="btn btn-danger btn-sm" onclick="eliminarProducto(${id})">Eliminar</button>
                         <input type="hidden" name="productos[]" value="${id}">
@@ -141,13 +165,42 @@
                 </tr>
             `;
             document.querySelector("#tablaProductos tbody").insertAdjacentHTML("beforeend", fila);
+            actualizarTotal();
         }
     }
 
-    // Eliminar producto de la tabla
+
+    // Actualizar subtotal
+    function actualizarSubtotal(id) {
+        let cantidadInput = document.querySelector(`input[data-id="${id}"]`);
+        let cantidad = parseInt(cantidadInput.value) || 1;
+        let precio = parseFloat(cantidadInput.dataset.precio);
+        let subtotal = cantidad * precio;
+
+        document.getElementById(`subtotal-${id}`).textContent = `$${subtotal.toFixed(2)}`;
+        actualizarTotal();
+    }
+
+    // Calcular total
+    function actualizarTotal() {
+        let total = 0;
+        document.querySelectorAll("td[id^='subtotal-']").forEach(subtotal => {
+            total += parseFloat(subtotal.textContent.replace("$", ""));
+        });
+        document.getElementById("totalFactura").textContent = `${total.toFixed(2)}`;
+        document.getElementById("totalInput").value = total.toFixed(2);
+    }
+
+    // Eliminar producto
     function eliminarProducto(id) {
         productosSeleccionados = productosSeleccionados.filter(prod => prod !== id);
-        document.querySelector(`#tablaProductos tbody tr input[value="${id}"]`).closest("tr").remove();
+        document.getElementById(`fila-${id}`).remove();
+        actualizarTotal();
     }
+
+    // Cuando se envía el formulario, asegúrate de actualizar el total final
+    document.querySelector("form").addEventListener("submit", function () {
+        actualizarTotal();
+    });
 </script>
 @endpush

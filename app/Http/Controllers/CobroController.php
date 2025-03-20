@@ -14,8 +14,8 @@ class CobroController extends Controller
      */
     public function index()
     {
-        $cobro = Facturacion::where('activo', 1)->get();
-        return view('cobro.cobro', compact('cobro'));
+        $cobros = Facturacion::where('activo', 1)->with('cliente')->orderBy('id', 'desc')->get();
+        return view('cobro.cobro', compact('cobros'));
     }
 
     /**

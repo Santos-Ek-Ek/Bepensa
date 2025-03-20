@@ -17,4 +17,10 @@ class Cliente extends Model
         "direccion",
         "activo"
     ];
+
+    // Relación con Facturacion
+    public function facturaciones()
+    {
+        return $this->hasMany(Facturacion::class, 'cliente_id');
+    }
 }

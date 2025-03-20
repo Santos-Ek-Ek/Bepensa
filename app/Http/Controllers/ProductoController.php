@@ -20,10 +20,14 @@ class ProductoController extends Controller
     public function buscar(Request $request)
     {
         $query = $request->q;
-        $productos = Producto::where('codigo', 'LIKE', "%$query%")
-                    ->orWhere('nombre', 'LIKE', "%$query%")
-                    ->limit(5)
-                    ->get();
+        $productos = Producto::where('activo', 1)
+            ->where(function ($queryBuilder) use ($query) {
+                $queryBuilder->where('codigo', 'LIKE', "%$query%")
+                            ->orWhere('nombre', 'LIKE', "%$query%");
+            })
+            ->limit(5)
+            ->get();
+
         return response()->json($productos);
     }
 

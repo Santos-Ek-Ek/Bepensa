@@ -63,6 +63,30 @@
             </tr>
           </thead>
           <tbody id="invoice-table-body">
+            @foreach ($cobros as $factura)
+              <tr>
+                <td>{{ $factura->codigo }}</td>
+                <td>{{ $factura->cliente->nombre_tienda }} - {{ $factura->cliente->rfc }}</td>
+                <td>{{ $factura->created_at->format('d/m/Y') }}</td>
+                <td>${{ $factura->total }}</td>
+                <td></td>
+                <td>
+                  <a href="" class="btn btn-info btn-sm">
+                    <i class="fas fa-eye"></i>
+                  </a>
+                  <a href="" class="btn btn-primary btn-sm">
+                    <i class="fas fa-pencil-alt"></i>
+                  </a>
+                  <form action="" method="POST" style="display:inline;">
+                      @csrf
+                      @method('DELETE')
+                      <button type="submit" class="btn btn-danger btn-sm">
+                        <i class="fas fa-trash-alt "></i>
+                      </button>
+                  </form>
+                </td>
+              </tr>
+            @endforeach
             <!-- <tr>
               <td colspan="8" class="text-center">No hay facturas registradas</td>
             </tr> -->
@@ -120,9 +144,10 @@
         "autoWidth": false,
         'paging': true,
         "pageLength": 10,
-        'searching'   : false,
+        'searching'   : true,
         'ordering'    : true,
         'info'        : true,
+        "order": [[0, "desc"]],
       }).buttons().container().appendTo('#facturacionDataTable_wrapper .col-md-6:eq(0)');
     });
   </script>

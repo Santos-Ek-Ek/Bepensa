@@ -14,7 +14,14 @@ class Facturacion extends Model
         'cliente_id',
         'cfdi_id',
         'codigo',
+        'total',
         'forma_pago',
         'activo'
     ];
+
+    // Relación con Cliente
+    public function cliente()
+    {
+            return $this->belongsTo(Cliente::class, 'cliente_id');
+    }
 }

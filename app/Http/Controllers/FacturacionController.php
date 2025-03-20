@@ -39,18 +39,37 @@ class FacturacionController extends Controller
      */
     public function store(Request $request)
     {
+        // Validar los datos
+        $request->validate([
+            'cliente_id' => 'required',
+            'cfdi_id' => 'required',
+            'total' => 'required|numeric|min:0',
+            'productos' => 'required|array',
+            'cantidades' => 'required|array',
+        ]);
+
         $facturacion = Facturacion::create([
             'cliente_id' => $request->cliente_id,
             'cfdi_id' => $request->cfdi_id,
             'forma_pago' => 'EFECTIVO',
             'codigo' => 'FAC-' . time(),
+            'total' => $request->total,
             'activo' => 1
         ]);
 
         foreach ($request->productos as $key => $producto_id) {
+            $cantidad = $request->cantidades[$key];
+
+            // Obtener el precio (puedes obtenerlo de la DB si es necesario)
+            $precio = Producto::find($producto_id)->precio;
+            $subtotal = $precio * $cantidad;
+
             FacturacionProducto::create([
                 'facturacion_id' => $facturacion->id,
-                'producto_id' => $producto_id
+                'producto_id' => $producto_id,
+                'precio' => $precio,
+                'cantidad' => $cantidad,
+                'subtotal' => $subtotal,
             ]);
         }
 

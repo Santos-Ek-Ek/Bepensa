@@ -14,6 +14,9 @@ class FacturacionProducto extends Model
     protected $fillable = [
         'facturacion_id',
         'producto_id',
+        'precio',
+        'cantidad',
+        'subtotal',
         'activo'
     ];
 }
