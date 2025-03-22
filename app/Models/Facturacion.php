@@ -24,4 +24,10 @@ class Facturacion extends Model
     {
             return $this->belongsTo(Cliente::class, 'cliente_id');
     }
+
+    // traer productos
+    public function productos()
+    {
+        return $this->hasMany(FacturacionProducto::class, 'facturacion_id');
+    }
 }

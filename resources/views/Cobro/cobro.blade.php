@@ -74,9 +74,9 @@
                   <a href="" class="btn btn-info btn-sm">
                     <i class="fas fa-eye"></i>
                   </a>
-                  <a href="" class="btn btn-primary btn-sm">
+                  <button class="btn btn-primary btn-sm" onclick="abrirEditModal({{ $factura }})">
                     <i class="fas fa-pencil-alt"></i>
-                  </a>
+                  </button>
                   <form action="" method="POST" style="display:inline;">
                       @csrf
                       @method('DELETE')
@@ -96,38 +96,165 @@
     </div>
 
     <!-- Modal -->
-    <!-- <div class="modal fade" id="facturacionModal" tabindex="-1" aria-labelledby="facturacionModalLabel" aria-hidden="true">
+    <div class="modal fade" id="editarFacturacionModal" tabindex="-1" aria-labelledby="facturacionModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title" id="exampleModalLabel">Agregar facturación</h5>
-            <button type="button" class="btn-close" onclick="cerrarModal()" aria-label="Close"></button>
+            <h5 class="modal-title">Editar facturación</h5>
+            <button type="button" class="btn-close" onclick="cerrarEditModal()" aria-label="Close"></button>
           </div>
-          <form action="" style="flex-direction: column;">
+          <form id="editFacturacionForm" action="" method="POST"  style="flex-direction: column;">
             @csrf
+            @method('PUT')
             <div class="modal-body">
+              <input type="hidden" id="edit_facturacion_id" name="id">
+              <div class="row">
+                <div class="mb-3 col-md-6">
+                  <label for="edit_codigo" class="form-label">Código</label>
+                  <input type="text" class="form-control" id="edit_codigo" name="codigo" required>
+                </div>
+                <div class="mb-3 col-md-6">
+                  <label for="edit_total" class="form-label">Total</label>
+                  <input type="number" class="form-control" id="edit_total" name="total" required>
+                </div>
+              </div>
+              <h5>Productos</h5>
+              <table class="table table-bordered" id="productosDataTable">
+                  <thead>
+                      <tr>
+                          <th>Producto</th>
+                          <th>Precio</th>
+                          <th>Cantidad</th>
+                          <th>Subtotal</th>
+                      </tr>
+                  </thead>
+                  <tbody id="productos-tbody">
+                      <!-- Aquí se llenarán los productos con JS -->
+                  </tbody>
+              </table>
             </div>
             <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" onclick="cerrarModal()">Close</button>
-              <button type="button" class="btn btn-primary">Save changes</button>
+              <button type="button" class="btn btn-secondary" onclick="cerrarEditModal()">Cerrar</button>
+              <button type="submit" class="btn btn-primary">Guardar cambios</button>
             </div>
           </form>
         </div>
       </div>
-    </div> -->
+    </div>
 
   <script>
-    window.onload = function () {
-      var modalInstance = new bootstrap.Modal(document.getElementById('facturacionModal'));
+    document.addEventListener("DOMContentLoaded", function () {
+      var editModalInstance = new bootstrap.Modal(document.getElementById('editarFacturacionModal'));
 
-      window.abrirModal = function () {
-        modalInstance.show();
+      window.abrirEditModal = function (factura) {
+        document.getElementById("edit_facturacion_id").value = factura.id;
+        document.getElementById("edit_codigo").value = factura.codigo;
+        document.getElementById("edit_total").value = factura.total;
+
+        let productosTbody = document.getElementById("productos-tbody");
+        productosTbody.innerHTML = ""; // Limpiar la tabla antes de llenarla
+
+        factura.productos.forEach(producto => {
+            let fila = `
+                <tr data-id="${producto.id}">
+                    <td>${producto.producto.nombre}</td>
+                    <td class="precio">${producto.precio}</td>
+                    <td><input type="number" class="form-control cantidad" value="${producto.cantidad}" min="1"></td>
+                    <td class="subtotal">${(producto.precio * producto.cantidad).toFixed(2)}</td>
+                </tr>
+            `;
+            productosTbody.innerHTML += fila;
+        });
+
+        
+        // Destruir cualquier instancia anterior del DataTable
+        if ($.fn.dataTable.isDataTable('#productosDataTable')) {
+          $('#productosDataTable').DataTable().destroy();
+        }
+
+        // Inicializar el DataTable después de llenar la tabla con productos
+        $("#productosDataTable").DataTable({
+          "responsive": true,
+          "lengthChange": false, 
+          "autoWidth": false,
+          'paging': false,
+          'searching'   : false,
+          'ordering'    : false,
+          'info'        : false,
+        }).buttons().container().appendTo('#productosDataTable_wrapper .col-md-6:eq(0)');
+
+        actualizarTotal();
+
+        editModalInstance.show();
       }
 
-      window.cerrarModal = function () {
-        modalInstance.hide();
+      document.addEventListener("input", function (event) {
+        if (event.target.classList.contains("cantidad")) {
+            let fila = event.target.closest("tr");
+            let precio = parseFloat(fila.querySelector(".precio").textContent);
+            let cantidad = parseInt(event.target.value) || 1;
+
+            let subtotal = precio * cantidad;
+            fila.querySelector(".subtotal").textContent = subtotal.toFixed(2);
+
+            actualizarTotal();
+        }
+      });
+
+      function actualizarTotal() {
+          let total = 0;
+          document.querySelectorAll("#productos-tbody tr").forEach(fila => {
+              total += parseFloat(fila.querySelector(".subtotal").textContent);
+          });
+          document.getElementById("edit_total").value = total.toFixed(2);
       }
-    };
+
+      window.cerrarEditModal = function () {
+        editModalInstance.hide();
+      }
+    });
+
+
+    $(document).ready(function () {
+    $("#editFacturacionForm").submit(function (event) {
+        event.preventDefault();
+
+        let facturaId = $("#edit_facturacion_id").val();
+        let productos = [];
+
+        $("#productos-tbody tr").each(function () {
+            productos.push({
+                id: $(this).attr("data-id"),
+                cantidad: $(this).find(".cantidad").val()
+            });
+        });
+
+        let data = {
+            id: facturaId,
+            codigo: $("#edit_codigo").val(),
+            total: $("#edit_total").val(),
+            productos: productos
+        };
+
+        $.ajax({
+            url: `/facturas/${facturaId}`,
+            type: "PUT",
+            headers: {
+                "X-CSRF-TOKEN":  document.querySelector("#token").getAttribute("value"),
+            },
+            contentType: "application/json",
+            data: JSON.stringify(data),
+            success: function (response) {
+                alert("Factura actualizada correctamente");
+                location.reload();
+            },
+            error: function (xhr) {
+                console.error("Error:", xhr.responseText);
+                alert("Error al actualizar la factura. Revisa la consola para más detalles.");
+            }
+        });
+    });
+});
 
     // document.getElementById('generate-invoice').addEventListener('click', function () {
     //   const { jsPDF } = window.jspdf;

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Facturacion;
+use App\Models\FacturacionProducto;
+use App\Models\Producto;
 use Illuminate\Http\Request;
 
 class CobroController extends Controller
@@ -14,7 +16,7 @@ class CobroController extends Controller
      */
     public function index()
     {
-        $cobros = Facturacion::where('activo', 1)->with('cliente')->orderBy('id', 'desc')->get();
+        $cobros = Facturacion::where('activo', 1)->with('cliente', 'productos.producto')->orderBy('id', 'desc')->get();
         return view('cobro.cobro', compact('cobros'));
     }
 
@@ -50,6 +52,32 @@ class CobroController extends Controller
     public function update(Request $request, $id)
     {
         //
+        try {
+            $factura = Facturacion::findOrFail($id);
+            $factura->codigo = $request->codigo;
+            $factura->total = $request->total;
+            $factura->save();
+    
+            // Actualizar productos directamente en la tabla intermedia
+            if (!empty($request->productos)) {
+                foreach ($request->productos as $productoData) {
+                    FacturacionProducto::where('facturacion_id', $id)
+                        ->where('producto_id', $productoData['id'])
+                        ->update(['cantidad' => $productoData['cantidad']]);
+                }
+            }
+    
+            return response()->json([
+                'success' => true, 
+                'message' => 'Factura actualizada correctamente'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false, 
+                'message' => 'Error al actualizar la factura', 
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**

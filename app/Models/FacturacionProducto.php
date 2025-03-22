@@ -19,4 +19,10 @@ class FacturacionProducto extends Model
         'subtotal',
         'activo'
     ];
+
+    // relación con producto
+    public function producto()
+    {
+        return $this->belongsTo(Producto::class, 'producto_id');
+    }
 }

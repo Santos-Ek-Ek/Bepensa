@@ -118,3 +118,4 @@ Route::get('nueva-facturacion', [FacturacionController::class, 'index'])->name('
 Route::post('crear-facturacion', [FacturacionController::class, 'store'])->name('crear-facturacion');
 Route::resource('facturacion', FacturacionController::class);
 Route::get('/buscar-productos', [ProductoController::class, 'buscar']);
+Route::put('/facturas/{id}', [CobroController::class, 'update']);
