@@ -74,8 +74,8 @@
                   <a href="" class="btn btn-info btn-sm">
                     <i class="fas fa-eye"></i>
                   </a>
-                  <button class="btn btn-primary btn-sm" onclick="abrirEditModal({{ $factura }})">
-                    <i class="fas fa-pencil-alt"></i>
+                  <button class="btn btn-primary btn-sm" onclick="abrirEditModal({{ json_encode($factura->load('productos.producto')) }})">
+                      <i class="fas fa-pencil-alt"></i>
                   </button>
                   <form action="" method="POST" style="display:inline;">
                       @csrf
@@ -115,7 +115,7 @@
                 </div>
                 <div class="mb-3 col-md-6">
                   <label for="edit_total" class="form-label">Total</label>
-                  <input type="number" class="form-control" id="edit_total" name="total" required>
+                  <input type="number" class="form-control" id="edit_total" name="total" required step="0.01" disabled>
                 </div>
               </div>
               <h5>Productos</h5>
@@ -142,142 +142,146 @@
       </div>
     </div>
 
-  <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      var editModalInstance = new bootstrap.Modal(document.getElementById('editarFacturacionModal'));
+    <script>
+document.addEventListener("DOMContentLoaded", function () {
+    var editModalInstance = new bootstrap.Modal(document.getElementById('editarFacturacionModal'));
+    var productosDataTable = null;
 
-      window.abrirEditModal = function (factura) {
-        document.getElementById("edit_facturacion_id").value = factura.id;
-        document.getElementById("edit_codigo").value = factura.codigo;
-        document.getElementById("edit_total").value = factura.total;
-
-        let productosTbody = document.getElementById("productos-tbody");
-        productosTbody.innerHTML = ""; // Limpiar la tabla antes de llenarla
-
-        factura.productos.forEach(producto => {
-            let fila = `
-                <tr data-id="${producto.id}">
-                    <td>${producto.producto.nombre}</td>
-                    <td class="precio">${producto.precio}</td>
-                    <td><input type="number" class="form-control cantidad" value="${producto.cantidad}" min="1"></td>
-                    <td class="subtotal">${(producto.precio * producto.cantidad).toFixed(2)}</td>
-                </tr>
-            `;
-            productosTbody.innerHTML += fila;
-        });
-
-        
-        // Destruir cualquier instancia anterior del DataTable
-        if ($.fn.dataTable.isDataTable('#productosDataTable')) {
-          $('#productosDataTable').DataTable().destroy();
+    window.abrirEditModal = function (facturaData) {
+        // Limpieza completa antes de abrir
+        if (productosDataTable) {
+            productosDataTable.destroy();
+            $('#productos-tbody').empty();
+            productosDataTable = null;
         }
 
-        // Inicializar el DataTable después de llenar la tabla con productos
-        $("#productosDataTable").DataTable({
-          "responsive": true,
-          "lengthChange": false, 
-          "autoWidth": false,
-          'paging': false,
-          'searching'   : false,
-          'ordering'    : false,
-          'info'        : false,
-        }).buttons().container().appendTo('#productosDataTable_wrapper .col-md-6:eq(0)');
+        // Parsear datos
+        const factura = typeof facturaData === 'string' ? JSON.parse(facturaData.replace(/&quot;/g, '"')) : facturaData;
+        
+        console.log('Factura a editar:', factura); // Depuración
+        
+        // Llenar datos básicos
+        $('#edit_facturacion_id').val(factura.id);
+        $('#edit_codigo').val(factura.codigo);
+        $('#edit_total').val(factura.total);
 
-        actualizarTotal();
+        // Limpiar y reconstruir tabla de productos
+        rebuildProductosTable(factura.productos);
 
         editModalInstance.show();
-      }
+    };
 
-      document.addEventListener("input", function (event) {
-        if (event.target.classList.contains("cantidad")) {
-            let fila = event.target.closest("tr");
-            let precio = parseFloat(fila.querySelector(".precio").textContent);
-            let cantidad = parseInt(event.target.value) || 1;
+    function rebuildProductosTable(productos) {
+        const tbody = $('#productos-tbody');
+        tbody.empty(); // Limpieza completa
 
-            let subtotal = precio * cantidad;
-            fila.querySelector(".subtotal").textContent = subtotal.toFixed(2);
-
-            actualizarTotal();
+        if (productos && productos.length > 0) {
+            productos.forEach(p => {
+                const nombre = p.producto ? p.producto.nombre : 'Producto no disponible';
+                const subtotal = (p.precio * p.cantidad).toFixed(2);
+                
+                tbody.append(`
+                    <tr data-id="${p.id}">
+                        <td>${nombre}</td>
+                        <td class="precio">${p.precio}</td>
+                        <td><input type="number" class="form-control cantidad" 
+                               value="${p.cantidad}" min="1"></td>
+                        <td class="subtotal">${subtotal}</td>
+                    </tr>
+                `);
+            });
         }
-      });
 
-      function actualizarTotal() {
-          let total = 0;
-          document.querySelectorAll("#productos-tbody tr").forEach(fila => {
-              total += parseFloat(fila.querySelector(".subtotal").textContent);
-          });
-          document.getElementById("edit_total").value = total.toFixed(2);
-      }
+        // Destruir DataTable si existe
+        if (productosDataTable) {
+            productosDataTable.destroy();
+        }
 
-      window.cerrarEditModal = function () {
+        // Crear nuevo DataTable con configuración mínima
+        productosDataTable = $('#productosDataTable').DataTable({
+            searching: false,
+            paging: false,
+            info: false,
+            ordering: false,
+            responsive: true,
+            autoWidth: false,
+            destroy: true // Permite recreación
+        });
+
+        // Eventos de cambio
+        $('#productosDataTable').off('change', '.cantidad').on('change', '.cantidad', function() {
+            const row = $(this).closest('tr');
+            const precio = parseFloat(row.find('.precio').text());
+            const cantidad = parseInt($(this).val()) || 0;
+            const subtotal = (precio * cantidad).toFixed(2);
+            row.find('.subtotal').text(subtotal);
+            updateTotal();
+        });
+    }
+
+    function updateTotal() {
+        let total = 0;
+        $('.subtotal').each(function() {
+            total += parseFloat($(this).text()) || 0;
+        });
+        $('#edit_total').val(total.toFixed(2));
+    }
+
+    window.cerrarEditModal = function() {
+        // Limpieza completa al cerrar
+        if (productosDataTable) {
+            productosDataTable.destroy();
+            $('#productos-tbody').empty();
+            productosDataTable = null;
+        }
+        $('#edit_facturacion_id, #edit_codigo, #edit_total').val('');
         editModalInstance.hide();
-      }
-    });
+    };
 
-
-    $(document).ready(function () {
-    $("#editFacturacionForm").submit(function (event) {
-        event.preventDefault();
-
-        let facturaId = $("#edit_facturacion_id").val();
-        let productos = [];
-
-        $("#productos-tbody tr").each(function () {
+    // Envío del formulario
+    $('#editFacturacionForm').off('submit').on('submit', function(e) {
+        e.preventDefault();
+        
+        const productos = [];
+        $('#productos-tbody tr').each(function() {
             productos.push({
-                id: $(this).attr("data-id"),
-                cantidad: $(this).find(".cantidad").val()
+                id: $(this).data('id'),
+                cantidad: $(this).find('.cantidad').val(),
+                precio: parseFloat($(this).find('.precio').text())
             });
         });
 
-        let data = {
-            id: facturaId,
-            codigo: $("#edit_codigo").val(),
-            total: $("#edit_total").val(),
-            productos: productos
-        };
-
         $.ajax({
-            url: `/facturas/${facturaId}`,
-            type: "PUT",
-            headers: {
-                "X-CSRF-TOKEN":  document.querySelector("#token").getAttribute("value"),
+            url: `/facturas/${$('#edit_facturacion_id').val()}`,
+            type: 'POST',
+            data: {
+                _token: $('[name="_token"]').val(),
+                _method: 'PUT',
+                codigo: $('#edit_codigo').val(),
+                total: $('#edit_total').val(),
+                productos: productos
             },
-            contentType: "application/json",
-            data: JSON.stringify(data),
-            success: function (response) {
-                alert("Factura actualizada correctamente");
+            success: function(res) {
+                alert(res.message || 'Actualizado correctamente');
                 location.reload();
             },
-            error: function (xhr) {
-                console.error("Error:", xhr.responseText);
-                alert("Error al actualizar la factura. Revisa la consola para más detalles.");
+            error: function(xhr) {
+                console.error('Error:', xhr.responseText);
+                alert(xhr.responseJSON?.message || 'Error al actualizar');
             }
         });
     });
 });
 
-    // document.getElementById('generate-invoice').addEventListener('click', function () {
-    //   const { jsPDF } = window.jspdf;
-    //   const doc = new jsPDF();
-    //   doc.text("Factura - Bepensa Izamal SA DE C.V", 10, 10);
-    //   doc.save("factura.pdf");
-    // });
-
-    $(document).ready(function() {
-
-      $("#facturacionDataTable").DataTable({
-        "responsive": true,
-        "lengthChange": false, 
-        "autoWidth": false,
-        'paging': true,
-        "pageLength": 10,
-        'searching'   : true,
-        'ordering'    : true,
-        'info'        : true,
-        "order": [[0, "desc"]],
-      }).buttons().container().appendTo('#facturacionDataTable_wrapper .col-md-6:eq(0)');
+// DataTable principal
+$(function() {
+    $('#facturacionDataTable').DataTable({
+        order: [[0, 'desc']],
+        responsive: true,
+        pageLength: 10
     });
-  </script>
+});
+</script>
 </div>
 @endsection
 @push('scripts')

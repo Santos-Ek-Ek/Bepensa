@@ -51,30 +51,37 @@ class CobroController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
         try {
             $factura = Facturacion::findOrFail($id);
             $factura->codigo = $request->codigo;
             $factura->total = $request->total;
             $factura->save();
     
-            // Actualizar productos directamente en la tabla intermedia
-            if (!empty($request->productos)) {
+            // Actualizar productos
+            if ($request->has('productos')) {
                 foreach ($request->productos as $productoData) {
-                    FacturacionProducto::where('facturacion_id', $id)
-                        ->where('producto_id', $productoData['id'])
-                        ->update(['cantidad' => $productoData['cantidad']]);
+                    // Buscar el producto en la factura
+                    $facturaProducto = FacturacionProducto::where('facturacion_id', $id)
+                        ->where('id', $productoData['id'])
+                        ->first();
+    
+                    if ($facturaProducto) {
+                        $facturaProducto->cantidad = $productoData['cantidad'];
+                        $facturaProducto->save();
+                    }
                 }
             }
     
             return response()->json([
                 'success' => true, 
-                'message' => 'Factura actualizada correctamente'
+                'message' => 'Factura actualizada correctamente',
+                'data' => $factura->load('productos.producto')
             ]);
+    
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false, 
-                'message' => 'Error al actualizar la factura', 
+                'message' => 'Error al actualizar la factura',
                 'error' => $e->getMessage()
             ], 500);
         }
