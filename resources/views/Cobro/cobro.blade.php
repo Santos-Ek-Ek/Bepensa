@@ -204,6 +204,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     groupedProducts[productId] = {
                         id: p.id,
                         producto_id: productId,
+                        codigo: p.producto ? p.producto.codigo : '',
                         nombre: p.producto ? p.producto.nombre : 'Producto no disponible',
                         precio: p.precio,
                         cantidad: 0
@@ -218,7 +219,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 
                 tbody.append(`
                     <tr data-id="${p.id}" data-product-id="${p.producto_id}">
-                        <td>${p.nombre}</td>
+                        <td>${p.codigo} - ${p.nombre}</td>
                         <td class="precio">${p.precio}</td>
                         <td><input type="number" class="form-control cantidad" 
                               value="${p.cantidad}" min="1"></td>
