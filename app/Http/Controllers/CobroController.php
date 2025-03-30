@@ -57,21 +57,55 @@ class CobroController extends Controller
             $factura->total = $request->total;
             $factura->save();
     
-            // Actualizar productos
+            // Group products by product_id to sum quantities
+            $groupedProducts = [];
             if ($request->has('productos')) {
                 foreach ($request->productos as $productoData) {
-                    // Buscar el producto en la factura
-                    $facturaProducto = FacturacionProducto::where('facturacion_id', $id)
-                        ->where('id', $productoData['id'])
-                        ->first();
-    
-                    if ($facturaProducto) {
-                        $facturaProducto->cantidad = $productoData['cantidad'];
-                        $facturaProducto->save();
+                    $productId = $productoData['producto_id'];
+                    if (!isset($groupedProducts[$productId])) {
+                        $groupedProducts[$productId] = $productoData;
+                    } else {
+                        $groupedProducts[$productId]['cantidad'] += $productoData['cantidad'];
                     }
                 }
             }
-    
+
+            // Update existing products
+            foreach ($groupedProducts as $productData) {
+                $facturaProducto = FacturacionProducto::where('facturacion_id', $id)
+                    ->where('id', $productData['id'])
+                    ->first();
+
+                if ($facturaProducto) {
+                    $facturaProducto->cantidad = $productData['cantidad'];
+                    $facturaProducto->subtotal = $productData['cantidad'] * $productData['precio'];
+                    $facturaProducto->save();
+                }
+            }
+
+            // Add new products
+            if ($request->has('nuevos_productos')) {
+                $groupedNewProducts = [];
+                foreach ($request->nuevos_productos as $nuevoProducto) {
+                    $productId = $nuevoProducto['producto_id'];
+                    if (!isset($groupedNewProducts[$productId])) {
+                        $groupedNewProducts[$productId] = $nuevoProducto;
+                    } else {
+                        $groupedNewProducts[$productId]['cantidad'] += $nuevoProducto['cantidad'];
+                    }
+                }
+
+                foreach ($groupedNewProducts as $nuevoProducto) {
+                    FacturacionProducto::create([
+                        'facturacion_id' => $id,
+                        'producto_id' => $nuevoProducto['producto_id'],
+                        'cantidad' => $nuevoProducto['cantidad'],
+                        'precio' => $nuevoProducto['precio'],
+                        'subtotal' => $nuevoProducto['cantidad'] * $nuevoProducto['precio']
+                    ]);
+                }
+            }
+
             return response()->json([
                 'success' => true, 
                 'message' => 'Factura actualizada correctamente',

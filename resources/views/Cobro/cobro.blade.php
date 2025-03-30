@@ -118,6 +118,20 @@
                   <input type="number" class="form-control" id="edit_total" name="total" required step="0.01" disabled>
                 </div>
               </div>
+              
+              <!-- Add Product Search -->
+              <div class="row mb-3">
+                <div class="col-md-8" style="position: relative;">
+                  <label for="producto" class="form-label">Buscar Producto</label>
+                  <input type="text" id="buscarProducto" class="form-control" placeholder="Ingrese código o nombre">
+                  <select id="sugerencias" class="form-select mt-2" size="5" 
+                      style="display: none; position: absolute; width: 100%; top: 100%; left: 0; z-index: 1000;">
+                  </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                  <button type="button" id="agregarProductoBtn" class="btn btn-primary">Agregar Producto</button>
+                </div>
+              </div>
               <h5>Productos</h5>
               <table class="table table-bordered" id="productosDataTable">
                   <thead>
@@ -146,6 +160,7 @@
 document.addEventListener("DOMContentLoaded", function () {
     var editModalInstance = new bootstrap.Modal(document.getElementById('editarFacturacionModal'));
     var productosDataTable = null;
+    var selectedProduct = null;
 
     window.abrirEditModal = function (facturaData) {
         // Limpieza completa antes de abrir
@@ -168,6 +183,11 @@ document.addEventListener("DOMContentLoaded", function () {
         // Limpiar y reconstruir tabla de productos
         rebuildProductosTable(factura.productos);
 
+        // Reset product search
+        $('#buscarProducto').val('');
+        $('#sugerencias').hide().empty();
+        selectedProduct = null;
+
         editModalInstance.show();
     };
 
@@ -176,16 +196,32 @@ document.addEventListener("DOMContentLoaded", function () {
         tbody.empty(); // Limpieza completa
 
         if (productos && productos.length > 0) {
+            // Group products by product_id and sum quantities
+            const groupedProducts = {};
             productos.forEach(p => {
-                const nombre = p.producto ? p.producto.nombre : 'Producto no disponible';
+                const productId = p.producto_id;
+                if (!groupedProducts[productId]) {
+                    groupedProducts[productId] = {
+                        id: p.id,
+                        producto_id: productId,
+                        nombre: p.producto ? p.producto.nombre : 'Producto no disponible',
+                        precio: p.precio,
+                        cantidad: 0
+                    };
+                }
+                groupedProducts[productId].cantidad += p.cantidad;
+            });
+
+            // Add grouped products to table
+            Object.values(groupedProducts).forEach(p => {
                 const subtotal = (p.precio * p.cantidad).toFixed(2);
                 
                 tbody.append(`
-                    <tr data-id="${p.id}">
-                        <td>${nombre}</td>
+                    <tr data-id="${p.id}" data-product-id="${p.producto_id}">
+                        <td>${p.nombre}</td>
                         <td class="precio">${p.precio}</td>
                         <td><input type="number" class="form-control cantidad" 
-                               value="${p.cantidad}" min="1"></td>
+                              value="${p.cantidad}" min="1"></td>
                         <td class="subtotal">${subtotal}</td>
                     </tr>
                 `);
@@ -219,6 +255,80 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+    // Product search functionality
+    $('#buscarProducto').on('input', function() {
+        const query = $(this).val();
+        if (query.length < 2) {
+            $('#sugerencias').hide().empty();
+            return;
+        }
+
+        $.ajax({
+            url: '/buscar-productos',
+            type: 'GET',
+            data: { q: query },
+            success: function(response) {
+                const sugerencias = $('#sugerencias');
+                sugerencias.empty();
+                
+                if (response.length > 0) {
+                    response.forEach(producto => {
+                        sugerencias.append(`<option value="${producto.id}" data-precio="${producto.precio}">${producto.codigo} - ${producto.nombre}</option>`);
+                    });
+                    sugerencias.show();
+                } else {
+                    sugerencias.hide();
+                }
+            }
+        });
+    });
+
+    // Select product from suggestions
+    $('#sugerencias').on('change', function() {
+        const selectedOption = $(this).find('option:selected');
+        if (selectedOption.length) {
+            selectedProduct = {
+                id: selectedOption.val(),
+                nombre: selectedOption.text(),
+                precio: selectedOption.data('precio')
+            };
+        }
+    });
+
+    // Add product button
+    $('#agregarProductoBtn').on('click', function() {
+        if (!selectedProduct) {
+            alert('Por favor seleccione un producto de la lista');
+            return;
+        }
+
+        // Check if product already exists in the table
+        const existingRow = $(`#productos-tbody tr[data-product-id="${selectedProduct.id}"]`);
+        if (existingRow.length > 0) {
+            // Increase quantity if product exists
+            const cantidadInput = existingRow.find('.cantidad');
+            cantidadInput.val(parseInt(cantidadInput.val()) + 1);
+            cantidadInput.trigger('change');
+        } else {
+            // Add new product row
+            const newRow = `
+                <tr data-product-id="${selectedProduct.id}">
+                    <td>${selectedProduct.nombre}</td>
+                    <td class="precio">${selectedProduct.precio}</td>
+                    <td><input type="number" class="form-control cantidad" value="1" min="1"></td>
+                    <td class="subtotal">${selectedProduct.precio}</td>
+                </tr>
+            `;
+            $('#productos-tbody').append(newRow);
+            updateTotal();
+        }
+
+        // Reset selection
+        $('#buscarProducto').val('');
+        $('#sugerencias').hide().empty();
+        selectedProduct = null;
+    });
+
     function updateTotal() {
         let total = 0;
         $('.subtotal').each(function() {
@@ -243,12 +353,27 @@ document.addEventListener("DOMContentLoaded", function () {
         e.preventDefault();
         
         const productos = [];
+        const nuevosProductos = [];
+
         $('#productos-tbody tr').each(function() {
-            productos.push({
-                id: $(this).data('id'),
-                cantidad: $(this).find('.cantidad').val(),
-                precio: parseFloat($(this).find('.precio').text())
-            });
+            const row = $(this);
+            const productoId = row.data('product-id');
+            const facturaProductoId = row.data('id');
+            
+            const productoData = {
+                producto_id: productoId,
+                cantidad: row.find('.cantidad').val(),
+                precio: parseFloat(row.find('.precio').text())
+            };
+            
+            if (facturaProductoId) {
+                // Existing product
+                productoData.id = facturaProductoId;
+                productos.push(productoData);
+            } else {
+                // New product
+                nuevosProductos.push(productoData);
+            }
         });
 
         $.ajax({
@@ -259,7 +384,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 _method: 'PUT',
                 codigo: $('#edit_codigo').val(),
                 total: $('#edit_total').val(),
-                productos: productos
+                productos: productos,
+                nuevos_productos: nuevosProductos
             },
             success: function(res) {
                 alert(res.message || 'Actualizado correctamente');
