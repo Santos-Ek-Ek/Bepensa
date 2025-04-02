@@ -28,6 +28,6 @@ class Facturacion extends Model
     // traer productos
     public function productos()
     {
-        return $this->hasMany(FacturacionProducto::class, 'facturacion_id');
+        return $this->hasMany(FacturacionProducto::class, 'facturacion_id')->where('activo', 1);
     }
 }

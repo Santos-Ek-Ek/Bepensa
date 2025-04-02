@@ -140,6 +140,7 @@
                           <th>Precio</th>
                           <th>Cantidad</th>
                           <th>Subtotal</th>
+                          <th></th>
                       </tr>
                   </thead>
                   <tbody id="productos-tbody">
@@ -224,10 +225,23 @@ document.addEventListener("DOMContentLoaded", function () {
                         <td><input type="number" class="form-control cantidad" 
                               value="${p.cantidad}" min="1"></td>
                         <td class="subtotal">${subtotal}</td>
+                        <td>
+                          <button type="button" class="btn btn-danger btn-sm btn-eliminar-producto">
+                            <i class="fas fa-trash-alt"></i>
+                          </button>
+                        </td>
                     </tr>
                 `);
             });
         }
+
+        // Agregar evento para eliminar productos
+        $('#productosDataTable').on('click', '.btn-eliminar-producto', function() {
+          const row = $(this).closest('tr');
+          row.addClass('producto-eliminado');
+          row.hide();
+          updateTotal(); // Actualizar el total inmediatamente
+        });
 
         // Destruir DataTable si existe
         if (productosDataTable) {
@@ -318,6 +332,11 @@ document.addEventListener("DOMContentLoaded", function () {
                     <td class="precio">${selectedProduct.precio}</td>
                     <td><input type="number" class="form-control cantidad" value="1" min="1"></td>
                     <td class="subtotal">${selectedProduct.precio}</td>
+                    <td>
+                      <button type="button" class="btn btn-danger btn-sm btn-eliminar-producto">
+                        <i class="fas fa-trash-alt"></i>
+                      </button>
+                    </td>
                 </tr>
             `;
             $('#productos-tbody').append(newRow);
@@ -330,10 +349,12 @@ document.addEventListener("DOMContentLoaded", function () {
         selectedProduct = null;
     });
 
+    // Modificar la función updateTotal para ignorar filas ocultas
     function updateTotal() {
         let total = 0;
-        $('.subtotal').each(function() {
-            total += parseFloat($(this).text()) || 0;
+        $('#productos-tbody tr:visible').each(function() { // Solo filas visibles
+            const subtotalText = $(this).find('.subtotal').text();
+            total += parseFloat(subtotalText) || 0;
         });
         $('#edit_total').val(total.toFixed(2));
     }
@@ -355,25 +376,32 @@ document.addEventListener("DOMContentLoaded", function () {
         
         const productos = [];
         const nuevosProductos = [];
+        const productosEliminados = [];
 
         $('#productos-tbody tr').each(function() {
             const row = $(this);
             const productoId = row.data('product-id');
             const facturaProductoId = row.data('id');
             
-            const productoData = {
-                producto_id: productoId,
-                cantidad: row.find('.cantidad').val(),
-                precio: parseFloat(row.find('.precio').text())
-            };
-            
-            if (facturaProductoId) {
-                // Existing product
-                productoData.id = facturaProductoId;
-                productos.push(productoData);
+            if (row.hasClass('producto-eliminado')) {
+                // Producto marcado para eliminar
+                productosEliminados.push({
+                    id: facturaProductoId,
+                    producto_id: productoId
+                });
             } else {
-                // New product
-                nuevosProductos.push(productoData);
+                const productoData = {
+                    producto_id: productoId,
+                    cantidad: row.find('.cantidad').val(),
+                    precio: parseFloat(row.find('.precio').text())
+                };
+                
+                if (facturaProductoId) {
+                    productoData.id = facturaProductoId;
+                    productos.push(productoData);
+                } else {
+                    nuevosProductos.push(productoData);
+                }
             }
         });
 
@@ -386,7 +414,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 codigo: $('#edit_codigo').val(),
                 total: $('#edit_total').val(),
                 productos: productos,
-                nuevos_productos: nuevosProductos
+                nuevos_productos: nuevosProductos,
+                productos_eliminados: productosEliminados
             },
             success: function(res) {
                 alert(res.message || 'Actualizado correctamente');
@@ -403,10 +432,15 @@ document.addEventListener("DOMContentLoaded", function () {
 // DataTable principal
 $(function() {
     $('#facturacionDataTable').DataTable({
-        order: [[0, 'desc']],
         responsive: true,
-        pageLength: 10
-    });
+        lengthChange: false,
+        autoWidth: false,
+        paging: true,
+        pageLength: 10,
+        searching: true,
+        ordering: true,
+        info: true,
+      }).buttons().container().appendTo('#facturacionDataTable_wrapper .col-md-6:eq(0)');
 });
 </script>
 </div>

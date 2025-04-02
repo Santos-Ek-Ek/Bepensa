@@ -6,6 +6,7 @@ use App\Models\Facturacion;
 use App\Models\FacturacionProducto;
 use App\Models\Producto;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class CobroController extends Controller
 {
@@ -52,67 +53,87 @@ class CobroController extends Controller
     public function update(Request $request, $id)
     {
         try {
+            DB::beginTransaction();
+    
             $factura = Facturacion::findOrFail($id);
             $factura->codigo = $request->codigo;
             $factura->total = $request->total;
             $factura->save();
     
-            // Group products by product_id to sum quantities
-            $groupedProducts = [];
+            // 1. Manejar productos eliminados (marcar como inactivos)
+            if ($request->has('productos_eliminados')) {
+                foreach ($request->productos_eliminados as $productoEliminado) {
+                    FacturacionProducto::where('id', $productoEliminado['id'])
+                        ->where('facturacion_id', $id)
+                        ->update(['activo' => 0]);
+                }
+            }
+    
+            // 2. Actualizar productos existentes
             if ($request->has('productos')) {
                 foreach ($request->productos as $productoData) {
-                    $productId = $productoData['producto_id'];
-                    if (!isset($groupedProducts[$productId])) {
-                        $groupedProducts[$productId] = $productoData;
-                    } else {
-                        $groupedProducts[$productId]['cantidad'] += $productoData['cantidad'];
-                    }
+                    $subtotal = $productoData['cantidad'] * $productoData['precio'];
+
+                    FacturacionProducto::updateOrCreate(
+                        [
+                            'id' => $productoData['id'],
+                            'facturacion_id' => $id
+                        ],
+                        [
+                            'producto_id' => $productoData['producto_id'],
+                            'cantidad' => $productoData['cantidad'],
+                            'precio' => $productoData['precio'],
+                            'subtotal' => $subtotal,
+                            'activo' => 1 // Reactivar si estaba inactivo
+                        ]
+                    );
                 }
             }
-
-            // Update existing products
-            foreach ($groupedProducts as $productData) {
-                $facturaProducto = FacturacionProducto::where('facturacion_id', $id)
-                    ->where('id', $productData['id'])
-                    ->first();
-
-                if ($facturaProducto) {
-                    $facturaProducto->cantidad = $productData['cantidad'];
-                    $facturaProducto->subtotal = $productData['cantidad'] * $productData['precio'];
-                    $facturaProducto->save();
-                }
-            }
-
-            // Add new products
+    
+            // 3. Agregar nuevos productos (solo si no existen)
             if ($request->has('nuevos_productos')) {
-                $groupedNewProducts = [];
                 foreach ($request->nuevos_productos as $nuevoProducto) {
-                    $productId = $nuevoProducto['producto_id'];
-                    if (!isset($groupedNewProducts[$productId])) {
-                        $groupedNewProducts[$productId] = $nuevoProducto;
+                    $subtotal = $nuevoProducto['cantidad'] * $nuevoProducto['precio'];
+
+                    // Verificar si existe un registro inactivo para este producto
+                    $existente = FacturacionProducto::where('facturacion_id', $id)
+                        ->where('producto_id', $nuevoProducto['producto_id'])
+                        ->first();
+
+                    if ($existente) {
+                        // Reactivar el existente
+                        $existente->update([
+                            'cantidad' => $nuevoProducto['cantidad'],
+                            'precio' => $nuevoProducto['precio'],
+                            'subtotal' => $subtotal,
+                            'activo' => 1
+                        ]);
                     } else {
-                        $groupedNewProducts[$productId]['cantidad'] += $nuevoProducto['cantidad'];
+                        // Crear nuevo registro
+                        FacturacionProducto::create([
+                            'facturacion_id' => $id,
+                            'producto_id' => $nuevoProducto['producto_id'],
+                            'cantidad' => $nuevoProducto['cantidad'],
+                            'precio' => $nuevoProducto['precio'],
+                            'subtotal' => $subtotal,
+                            'activo' => 1
+                        ]);
                     }
                 }
-
-                foreach ($groupedNewProducts as $nuevoProducto) {
-                    FacturacionProducto::create([
-                        'facturacion_id' => $id,
-                        'producto_id' => $nuevoProducto['producto_id'],
-                        'cantidad' => $nuevoProducto['cantidad'],
-                        'precio' => $nuevoProducto['precio'],
-                        'subtotal' => $nuevoProducto['cantidad'] * $nuevoProducto['precio']
-                    ]);
-                }
             }
-
+    
+            DB::commit();
+    
             return response()->json([
                 'success' => true, 
                 'message' => 'Factura actualizada correctamente',
-                'data' => $factura->load('productos.producto')
+                'data' => $factura->load(['productos' => function($query) {
+                    $query->where('activo', 1);
+                }, 'productos.producto'])
             ]);
     
         } catch (\Exception $e) {
+            DB::rollBack();
             return response()->json([
                 'success' => false, 
                 'message' => 'Error al actualizar la factura',
