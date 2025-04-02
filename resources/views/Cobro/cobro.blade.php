@@ -71,17 +71,17 @@
                 <td>${{ $factura->total }}</td>
                 <td></td>
                 <td>
-                  <a href="" class="btn btn-info btn-sm">
+                  <button class="btn btn-info btn-sm" onclick="abrirViewModal({{ json_encode($factura->load('productos.producto')) }})">
                     <i class="fas fa-eye"></i>
-                  </a>
+                  </button>
                   <button class="btn btn-primary btn-sm" onclick="abrirEditModal({{ json_encode($factura->load('productos.producto')) }})">
                       <i class="fas fa-pencil-alt"></i>
                   </button>
-                  <form action="" method="POST" style="display:inline;">
+                  <form action="{{ route('facturacion.destroy', $factura->id) }}" method="POST" style="display:inline;">
                       @csrf
                       @method('DELETE')
-                      <button type="submit" class="btn btn-danger btn-sm">
-                        <i class="fas fa-trash-alt "></i>
+                      <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('¿Estás seguro de eliminar esta factura?')">
+                          <i class="fas fa-trash-alt"></i>
                       </button>
                   </form>
                 </td>
@@ -95,7 +95,7 @@
       </div>
     </div>
 
-    <!-- Modal -->
+    <!-- Modal de edición -->
     <div class="modal fade" id="editarFacturacionModal" tabindex="-1" aria-labelledby="facturacionModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -107,11 +107,13 @@
             @csrf
             @method('PUT')
             <div class="modal-body">
+              <!-- Espacio para mensajes de error -->
+              <div id="modal-error-container"></div>
               <input type="hidden" id="edit_facturacion_id" name="id">
               <div class="row">
                 <div class="mb-3 col-md-6">
                   <label for="edit_codigo" class="form-label">Código</label>
-                  <input type="text" class="form-control" id="edit_codigo" name="codigo" required>
+                  <input type="text" class="form-control" id="edit_codigo" name="codigo" required disabled>
                 </div>
                 <div class="mb-3 col-md-6">
                   <label for="edit_total" class="form-label">Total</label>
@@ -157,13 +159,129 @@
       </div>
     </div>
 
+    <!-- Modal de Visualización (Solo lectura) -->
+    <div class="modal fade" id="verFacturacionModal" tabindex="-1" aria-labelledby="verFacturacionModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Detalles de Factura</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"  onclick="cerrarViewModal()"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">Código:</label>
+                  <input type="text" class="form-control" id="view_codigo" readonly>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">Cliente:</label>
+                  <input type="text" class="form-control" id="view_cliente" readonly>
+                </div>
+              </div>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">Fecha:</label>
+                  <input type="text" class="form-control" id="view_fecha" readonly>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">Total:</label>
+                  <input type="text" class="form-control" id="view_total" readonly>
+                </div>
+              </div>
+            </div>
+            
+            <h5>Productos</h5>
+            <table class="table table-bordered">
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th>Precio</th>
+                  <th>Cantidad</th>
+                  <th>Subtotal</th>
+                </tr>
+              </thead>
+              <tbody id="view-productos-tbody">
+                <!-- Productos se llenarán con JS -->
+              </tbody>
+            </table>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="cerrarViewModal()">Cerrar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <script>
 document.addEventListener("DOMContentLoaded", function () {
+    // Modal de visualización
+    var viewModalInstance = new bootstrap.Modal(document.getElementById('verFacturacionModal'));
+
+    window.abrirViewModal = function(facturaData) {
+    const factura = typeof facturaData === 'string' ? JSON.parse(facturaData.replace(/&quot;/g, '"')) : facturaData;
+    
+    // Convertir total a número si es necesario
+    const total = typeof factura.total === 'string' ? parseFloat(factura.total) : factura.total;
+    
+    // Llenar datos básicos con validación
+    $('#view_codigo').val(factura.codigo || '');
+    $('#view_cliente').val(factura.cliente ? `${factura.cliente.nombre_tienda} - ${factura.cliente.rfc}` : 'Cliente no disponible');
+    $('#view_fecha').val(factura.created_at ? new Date(factura.created_at).toLocaleDateString() : '');
+    $('#view_total').val(total ? `$${Number(total).toFixed(2)}` : '$0.00');
+    
+    // Llenar productos
+    const tbody = $('#view-productos-tbody');
+    tbody.empty();
+    
+    if (factura.productos && factura.productos.length > 0) {
+        factura.productos.forEach(p => {
+            // Asegurarse que precio y cantidad sean números
+            const precio = typeof p.precio === 'string' ? parseFloat(p.precio) : p.precio;
+            const cantidad = typeof p.cantidad === 'string' ? parseInt(p.cantidad) : p.cantidad;
+            const subtotal = (precio * cantidad).toFixed(2);
+            const nombre = p.producto ? `${p.producto.codigo} - ${p.producto.nombre}` : 'Producto no disponible';
+            
+            tbody.append(`
+                <tr>
+                    <td>${nombre}</td>
+                    <td>$${Number(precio).toFixed(2)}</td>
+                    <td>${cantidad}</td>
+                    <td>$${subtotal}</td>
+                </tr>
+            `);
+        });
+    } else {
+        tbody.append('<tr><td colspan="4" class="text-center">No hay productos registrados</td></tr>');
+    }
+    
+    viewModalInstance.show();
+};
+
+window.cerrarViewModal = function() {
+    // Limpieza básica
+    $('#view_codigo, #view_cliente, #view_fecha, #view_total').val('');
+    $('#view-productos-tbody').empty();
+    
+    // Cerrar modal
+    viewModalInstance.hide();
+};
+
+    // edicion 
     var editModalInstance = new bootstrap.Modal(document.getElementById('editarFacturacionModal'));
     var productosDataTable = null;
     var selectedProduct = null;
 
     window.abrirEditModal = function (facturaData) {
+        // Limpiar errores previos
+        $('#modal-error-message').remove();
         // Limpieza completa antes de abrir
         if (productosDataTable) {
             productosDataTable.destroy();
@@ -370,62 +488,140 @@ document.addEventListener("DOMContentLoaded", function () {
         editModalInstance.hide();
     };
 
-    // Envío del formulario
-    $('#editFacturacionForm').off('submit').on('submit', function(e) {
+// Envío del formulario - Versión mejorada
+$('#editFacturacionForm').off('submit').on('submit', function(e) {
+    e.preventDefault();
+    
+    const productos = [];
+    const nuevosProductos = [];
+    const productosEliminados = [];
+
+    // Contar productos visibles (no eliminados)
+    const productosVisibles = $('#productos-tbody tr:visible').length;
+    
+    if(productosVisibles === 0) {
+        mostrarErrorEnModal('Debe agregar al menos un producto');
+        return;
+    }
+
+    $('#productos-tbody tr').each(function() {
+        const row = $(this);
+        const productoId = row.data('product-id');
+        const facturaProductoId = row.data('id');
+        
+        if (row.hasClass('producto-eliminado')) {
+            productosEliminados.push({
+                id: facturaProductoId,
+                producto_id: productoId
+            });
+        } else {
+            const cantidad = parseInt(row.find('.cantidad').val()) || 0;
+            const precio = parseFloat(row.find('.precio').text());
+            
+            if(cantidad <= 0) {
+                mostrarErrorEnModal('La cantidad debe ser mayor a 0');
+                return false; // Salir del each
+            }
+            
+            const productoData = {
+                producto_id: productoId,
+                cantidad: cantidad,
+                precio: precio
+            };
+            
+            if (facturaProductoId) {
+                productoData.id = facturaProductoId;
+                productos.push(productoData);
+            } else {
+                nuevosProductos.push(productoData);
+            }
+        }
+    });
+
+    // Limpiar errores previos
+    $('#modal-error-message').remove();
+    
+    $.ajax({
+        url: `/facturas/${$('#edit_facturacion_id').val()}`,
+        type: 'POST',
+        data: {
+            _token: $('[name="_token"]').val(),
+            _method: 'PUT',
+            codigo: $('#edit_codigo').val(),
+            total: $('#edit_total').val(),
+            productos: productos,
+            nuevos_productos: nuevosProductos,
+            productos_eliminados: productosEliminados
+        },
+        success: function(res) {
+            if(res.success) {
+                location.reload();
+            } else {
+                mostrarErrorEnModal(res.message || 'Error al actualizar');
+            }
+        },
+        error: function(xhr) {
+            let errorMsg = 'Error al actualizar la factura';
+            if(xhr.responseJSON && xhr.responseJSON.message) {
+                errorMsg = xhr.responseJSON.message;
+            }
+            mostrarErrorEnModal(errorMsg);
+        }
+    });
+});
+
+// Función para mostrar errores en el modal
+function mostrarErrorEnModal(mensaje) {
+    // Eliminar mensajes anteriores
+    $('#modal-error-message').remove();
+    
+    // Crear y mostrar nuevo mensaje
+    const errorDiv = $('<div id="modal-error-message" class="alert alert-danger mt-3"></div>');
+    errorDiv.text(mensaje);
+    $('.modal-body').prepend(errorDiv);
+    
+    // Hacer scroll al mensaje
+    $('.modal-body').animate({
+        scrollTop: 0
+    }, 500);
+}
+});
+
+// Eliminar facturación
+// En tu archivo JavaScript principal
+document.addEventListener('DOMContentLoaded', function() {
+    // Delegación de eventos para todos los formularios de eliminación
+    $(document).on('submit', 'form[method="DELETE"]', function(e) {
         e.preventDefault();
         
-        const productos = [];
-        const nuevosProductos = [];
-        const productosEliminados = [];
-
-        $('#productos-tbody tr').each(function() {
-            const row = $(this);
-            const productoId = row.data('product-id');
-            const facturaProductoId = row.data('id');
+        if(confirm('¿Estás seguro de eliminar esta factura?')) {
+            const form = this;
             
-            if (row.hasClass('producto-eliminado')) {
-                // Producto marcado para eliminar
-                productosEliminados.push({
-                    id: facturaProductoId,
-                    producto_id: productoId
-                });
-            } else {
-                const productoData = {
-                    producto_id: productoId,
-                    cantidad: row.find('.cantidad').val(),
-                    precio: parseFloat(row.find('.precio').text())
-                };
-                
-                if (facturaProductoId) {
-                    productoData.id = facturaProductoId;
-                    productos.push(productoData);
-                } else {
-                    nuevosProductos.push(productoData);
+            $.ajax({
+                url: form.action,
+                type: 'POST',
+                data: {
+                    _token: form.querySelector('[name="_token"]').value,
+                    _method: 'DELETE'
+                },
+                success: function(res) {
+                    if(res.success) {
+                        // Si la respuesta incluye redirección
+                        if(res.redirect) {
+                            window.location.href = res.redirect;
+                        } else {
+                            // Recargar la página si no hay redirección
+                            location.reload();
+                        }
+                    } else {
+                        alert(res.message || 'Error al eliminar');
+                    }
+                },
+                error: function(xhr) {
+                    alert(xhr.responseJSON?.message || 'Error en la solicitud');
                 }
-            }
-        });
-
-        $.ajax({
-            url: `/facturas/${$('#edit_facturacion_id').val()}`,
-            type: 'POST',
-            data: {
-                _token: $('[name="_token"]').val(),
-                _method: 'PUT',
-                codigo: $('#edit_codigo').val(),
-                total: $('#edit_total').val(),
-                productos: productos,
-                nuevos_productos: nuevosProductos,
-                productos_eliminados: productosEliminados
-            },
-            success: function(res) {
-                alert(res.message || 'Actualizado correctamente');
-                location.reload();
-            },
-            error: function(xhr) {
-                console.error('Error:', xhr.responseText);
-                alert(xhr.responseJSON?.message || 'Error al actualizar');
-            }
-        });
+            });
+        }
     });
 });
 
@@ -440,6 +636,7 @@ $(function() {
         searching: true,
         ordering: true,
         info: true,
+        order: [[0, 'desc']],
       }).buttons().container().appendTo('#facturacionDataTable_wrapper .col-md-6:eq(0)');
 });
 </script>
