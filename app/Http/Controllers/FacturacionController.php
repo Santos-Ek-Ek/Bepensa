@@ -9,6 +9,7 @@ use App\Models\FacturacionProducto;
 use App\Models\Producto;
 use App\Models\Proveedor;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class FacturacionController extends Controller
 {
@@ -39,14 +40,28 @@ class FacturacionController extends Controller
      */
     public function store(Request $request)
     {
-        // Validar los datos
-        $request->validate([
-            'cliente_id' => 'required',
-            'cfdi_id' => 'required',
-            'total' => 'required|numeric|min:0',
-            'productos' => 'required|array',
-            'cantidades' => 'required|array',
-        ]);
+    // Validar los datos
+    $validated = $request->validate([
+        'cliente_id' => 'required',
+        'cfdi_id' => 'required',
+        'total' => 'required|numeric|min:0',
+        'productos' => 'required|array|min:1',
+        'productos.*' => 'exists:productos,id',
+        'cantidades' => 'required|array|min:1',
+        'cantidades.*' => 'integer|min:1'
+    ], [
+        'cliente_id.required' => 'El cliente es requerido',
+        'cfdi_id.required' => 'El CFDI es requerido',
+        'total.required' => 'El total es requerido',
+        'productos.required' => 'Debe agregar al menos un producto',
+        'productos.min' => 'Debe agregar al menos un producto',
+        'cantidades.required' => 'Las cantidades son requeridas',
+        'cantidades.min' => 'Debe especificar cantidades para todos los productos',
+        'cantidades.*.min' => 'La cantidad mínima es 1'
+    ]);
+
+    try {
+        DB::beginTransaction();
 
         $facturacion = Facturacion::create([
             'cliente_id' => $request->cliente_id,
@@ -59,21 +74,26 @@ class FacturacionController extends Controller
 
         foreach ($request->productos as $key => $producto_id) {
             $cantidad = $request->cantidades[$key];
-
-            // Obtener el precio (puedes obtenerlo de la DB si es necesario)
-            $precio = Producto::find($producto_id)->precio;
-            $subtotal = $precio * $cantidad;
+            $producto = Producto::find($producto_id);
+            $subtotal = $producto->precio * $cantidad;
 
             FacturacionProducto::create([
                 'facturacion_id' => $facturacion->id,
                 'producto_id' => $producto_id,
-                'precio' => $precio,
+                'precio' => $producto->precio,
                 'cantidad' => $cantidad,
                 'subtotal' => $subtotal,
             ]);
         }
 
+        DB::commit();
+
         return redirect()->route('cobro')->with('success', 'Facturación creada exitosamente.');
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return back()->withInput()->with('error', 'Error al crear la facturación: ' . $e->getMessage());
+    }
     }
 
     /**
