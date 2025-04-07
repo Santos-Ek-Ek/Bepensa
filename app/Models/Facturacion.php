@@ -30,4 +30,12 @@ class Facturacion extends Model
     {
         return $this->hasMany(FacturacionProducto::class, 'facturacion_id')->where('activo', 1);
     }
+    public function cfdi()
+    {
+        return $this->belongsTo(Cfdi::class);
+    }
+    public function productosFactura()
+    {
+        return $this->hasMany(FacturacionProducto::class, 'facturacion_id');
+    }
 }

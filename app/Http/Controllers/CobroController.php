@@ -7,7 +7,8 @@ use App\Models\FacturacionProducto;
 use App\Models\Producto;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-
+use Illuminate\Support\Facades\Log;
+use Barryvdh\DomPDF\Facade\Pdf;
 class CobroController extends Controller
 {
     /**
@@ -205,6 +206,70 @@ class CobroController extends Controller
                 'message' => 'Error al eliminar la factura',
                 'error' => $e->getMessage()
             ], 500);
+        }
+    }
+
+    public function generarPdf($facturaCodigo)
+    {
+        try {
+            set_time_limit(180); // Increased timeout
+            ini_set('memory_limit', '512M'); // Adequate memory
+            
+            // Eager load only what's needed
+            $factura = Facturacion::with(['cliente:id,nombre_tienda,cod_cte,rfc,direccion,propietario',
+                'cfdi:id,folio,nombre', 'productosFactura' => function($query) {
+                $query->where('activo', 1)
+                      ->with(['producto' => function($q) {
+                          $q->select('id', 'codigo', 'nombre');
+                      }]);
+            }])
+            ->where('codigo', $facturaCodigo)
+            ->firstOrFail();
+    
+            if ($factura->productosFactura->isEmpty()) {
+                throw new \Exception("La factura no tiene productos asociados");
+            }
+    
+            $subtotal = $factura->productosFactura->sum('subtotal');
+            $iva = $factura->total - $subtotal;
+    
+            $data = [
+                'factura' => $factura,
+                'productos' => $factura->productosFactura,
+                'subtotal' => $subtotal,
+                'iva' => $iva,
+                'total' => $factura->total,
+                'fecha' => $factura->created_at->format('Y-m-d H:i:s'),
+                'factura_codigo' => $factura->codigo,
+                'cliente_nombre' => $factura->cliente->nombre_tienda ?? 'No especificado',
+                'cod_cte' => $factura->cliente->cod_cte ?? 'No especificado',
+                'rfc' => $factura->cliente->rfc ?? 'No especificado',
+                'direccion' => $factura->cliente->direccion ?? 'No especificado',
+                'propietario' => $factura->cliente->propietario ?? 'No especificado',
+                'cfdi_tipo' => ($factura->cfdi ? $factura->cfdi->folio . ' - ' . $factura->cfdi->nombre : 'No especificado')
+            ];
+    
+            // Use simpler PDF options
+            $pdf = Pdf::loadView('facturacion.factura-pdf', $data)
+                ->setPaper('legal', 'landscape')
+                ->setOptions([
+                    'defaultFont' => 'DejaVu Sans',
+                    'isRemoteEnabled' => true,
+                    'isHtml5ParserEnabled' => true,
+                    'isCssFloatEnabled' => true,
+                    'isFontSubsettingEnabled' => true,
+                    'dpi' => 120,
+                    'enable_css_float' => true,
+                    'debugCss' => false,
+                    'debugKeepTemp' => false,
+                    'fontHeightRatio' => 0.9 
+                ]);
+    
+            return $pdf->stream("factura-{$facturaCodigo}.pdf");
+    
+        } catch (\Exception $e) {
+            Log::error("Error generando PDF: " . $e->getMessage());
+            return back()->with('error', 'Error al generar el PDF: ' . $e->getMessage());
         }
     }
 }

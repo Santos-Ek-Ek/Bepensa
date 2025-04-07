@@ -120,3 +120,5 @@ Route::resource('facturacion', FacturacionController::class);
 Route::get('/buscar-productos', [ProductoController::class, 'buscar']);
 Route::put('/facturas/{id}', [CobroController::class, 'update']);
 Route::delete('/facturas/{id}', [CobroController::class, 'destroy'])->name('facturacion.destroy');
+
+Route::get('/facturas/pdf/{codigo}', [CobroController::class, 'generarPdf'])->name('facturas.pdf');

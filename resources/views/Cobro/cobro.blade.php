@@ -74,6 +74,9 @@
                   <button class="btn btn-info btn-sm" onclick="abrirViewModal({{ json_encode($factura->load('productos.producto')) }})">
                     <i class="fas fa-eye"></i>
                   </button>
+                  <button onclick="generarPDF('{{ $factura->codigo }}')" class="btn btn-info btn-sm">
+    <i class="fas fa-file-pdf"></i>
+</button>
                   <button class="btn btn-primary btn-sm" onclick="abrirEditModal({{ json_encode($factura->load('productos.producto')) }})">
                       <i class="fas fa-pencil-alt"></i>
                   </button>
@@ -569,7 +572,6 @@ $('#editFacturacionForm').off('submit').on('submit', function(e) {
         }
     });
 });
-
 // Función para mostrar errores en el modal
 function mostrarErrorEnModal(mensaje) {
     // Eliminar mensajes anteriores
@@ -586,7 +588,22 @@ function mostrarErrorEnModal(mensaje) {
     }, 500);
 }
 });
-
+function generarPDF(codigo) {
+    var url = '/facturas/pdf/' + codigo;
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.responseType = 'blob';
+    
+    xhr.onload = function() {
+        if (this.status === 200) {
+            var blob = new Blob([this.response], {type: 'application/pdf'});
+            var blobUrl = window.URL.createObjectURL(blob);
+            // Abrir en nueva pestaña en lugar de descargar
+            window.open(blobUrl, '_blank');
+        }
+    };
+    xhr.send();
+}
 // Eliminar facturación
 // En tu archivo JavaScript principal
 document.addEventListener('DOMContentLoaded', function() {
