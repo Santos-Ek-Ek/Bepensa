@@ -9,6 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
+
 class CobroController extends Controller
 {
     /**
@@ -16,10 +18,43 @@ class CobroController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        $cobros = Facturacion::where('activo', 1)->with('cliente', 'productos.producto')->orderBy('id', 'desc')->get();
+        $query = Facturacion::where('activo', 1)
+            ->with('cliente', 'productos.producto')
+            ->orderBy('id', 'desc');
+
+        // Filtros flexibles por fecha
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            // Caso 1: Ambas fechas están presentes (rango completo)
+            $query->whereBetween('created_at', [
+                $request->start_date . ' 00:00:00',
+                $request->end_date . ' 23:59:59'
+            ]);
+        } elseif ($request->filled('start_date')) {
+            // Caso 2: Solo fecha de inicio (desde start_date en adelante)
+            $query->where('created_at', '>=', $request->start_date . ' 00:00:00');
+        } elseif ($request->filled('end_date')) {
+            // Caso 3: Solo fecha de fin (hasta end_date)
+            $query->where('created_at', '<=', $request->end_date . ' 23:59:59');
+        }
+
+        $cobros = $query->get()->map(function ($factura) {
+            // Calcular días restantes si existe fecha de vencimiento
+            if ($factura->vencimiento) {
+                $hoy = now();
+                $vencimiento = Carbon::parse($factura->vencimiento);
+                $factura->dias_restantes = $hoy->diffInDays($vencimiento, false); // false permite valores negativos
+            } else {
+                $factura->dias_restantes = null;
+            }
+            
+            return $factura;
+        });
+        
+
         return view('cobro.cobro', compact('cobros'));
+
     }
 
     /**

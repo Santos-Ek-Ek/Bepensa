@@ -4,42 +4,30 @@
     <!-- Buscar facturas -->
     <div class="">
       <h5 style="text-align: left; font-weight: bolder">Filtrar por:</h5>
-      <form id="search-form" class="row g-3" style="gap: 0rem !important;">
-        <!-- <div class="col-md-4">
-          <label for="invoice-code" class="form-label">Código de factura</label>
-          <input type="text" id="invoice-code" class="form-control" placeholder="Ejemplo: NH186124">
+      <form id="search-form" class="row g-3" style="gap: 0rem !important;" method="GET" action="{{ url()->current() }}">
+        <div class="col-md-4">
+            <label for="start-date" class="form-label">Fecha de inicio</label>
+            <input type="date" id="start-date" name="start_date" class="form-control" 
+                  value="{{ request('start_date') }}">
         </div>
         <div class="col-md-4">
-          <label for="provider" class="form-label">Proveedor</label>
-          <select class="form-select form-control">
-            <option value="">Seleccionar</option>
-            @foreach (App\Models\Proveedor::all() as $proveedor)
-              <option value="{{ $proveedor->id }}">{{ $proveedor->proveedor }}</option>
-            @endforeach
-          </select>
+            <label for="end-date" class="form-label">Fecha de fin</label>
+            <input type="date" id="end-date" name="end_date" class="form-control" 
+                  value="{{ request('end_date') }}">
         </div>
-        <div class="col-md-4">
-          <label for="client" class="form-label">Cliente</label>
-          <select class="form-select form-control">
-            <option value="">Seleccionar</option>
-            @foreach (App\Models\Cliente::where('activo', 1)->get() as $cliente)
-              <option value="{{ $cliente->id }}">{{ $cliente->nombre_tienda }}</option>
-            @endforeach
-          </select>
-        </div> -->
-        <div class="col-md-4">
-          <label for="start-date" class="form-label">Fecha de inicio</label>
-          <input type="date" id="start-date" class="form-control" required>
-        </div>
-        <div class="col-md-4">
-          <label for="end-date" class="form-label">Fecha de fin</label>
-          <input type="date" id="end-date" class="form-control" required>
-        </div>
-        
         <div class="col-md-4 align-self-end">
-          <button type="submit" class="btn btn-primary form-control">Buscar</button>
+            <div class="row g-2">
+                <div class="col">
+                    <button type="submit" class="btn btn-primary w-100">Buscar</button>
+                </div>
+                @if(request()->has('start_date') || request()->has('end_date'))
+                <div class="col">
+                    <a href="{{ url()->current() }}" class="btn btn-secondary w-100">Limpiar filtros</a>
+                </div>
+                @endif
+            </div>
         </div>
-      </form>
+    </form>
     </div>
 
     <!-- Tabla de facturas -->
@@ -58,7 +46,7 @@
               <th>Cliente</th>
               <th>Fecha</th>
               <th>Total</th>
-              <th>Estado</th>
+              <th>Vigencia</th>
               <th>Acciones</th>
             </tr>
           </thead>
@@ -69,7 +57,21 @@
                 <td>{{ $factura->cliente->nombre_tienda }} - {{ $factura->cliente->rfc }}</td>
                 <td>{{ $factura->created_at->format('d/m/Y') }}</td>
                 <td>${{ $factura->total }}</td>
-                <td></td>
+                <td>
+                    @if($factura->dias_restantes === null)
+                        <span class="badge bg-secondary">{{ $factura->estado_vencimiento }}</span>
+                    @elseif($factura->dias_restantes > 15)
+                        <span class="badge bg-success">{{ $factura->dias_restantes }} días restantes</span>
+                    @elseif($factura->dias_restantes > 7)
+                        <span class="badge bg-primary">{{ $factura->dias_restantes }} días restantes</span>
+                    @elseif($factura->dias_restantes > 3)
+                        <span class="badge bg-warning text-dark">{{ $factura->dias_restantes }} días restantes</span>
+                    @elseif($factura->dias_restantes > 0)
+                        <span class="badge bg-danger">{{ $factura->dias_restantes }} días restantes</span>
+                    @else
+                        <span class="badge bg-dark">Vencida</span>
+                    @endif
+                </td>
                 <td>
                   <button class="btn btn-info btn-sm" onclick="abrirViewModal({{ json_encode($factura->load('productos.producto')) }})">
                     <i class="fas fa-eye"></i>

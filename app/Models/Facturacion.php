@@ -16,6 +16,7 @@ class Facturacion extends Model
         'codigo',
         'total',
         'forma_pago',
+        'vencimiento',
         'activo'
     ];
 

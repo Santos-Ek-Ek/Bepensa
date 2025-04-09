@@ -69,6 +69,7 @@ class FacturacionController extends Controller
             'forma_pago' => 'EFECTIVO',
             'codigo' => 'FAC-' . time(),
             'total' => $request->total,
+            'vencimiento' => now()->addDays(31),
             'activo' => 1
         ]);
 
