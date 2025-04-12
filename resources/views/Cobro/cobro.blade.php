@@ -47,6 +47,7 @@
               <th>Fecha</th>
               <th>Total</th>
               <th>Vigencia</th>
+              <th>Estatus</th>
               <th>Acciones</th>
             </tr>
           </thead>
@@ -58,9 +59,7 @@
                 <td>{{ $factura->created_at->format('d/m/Y') }}</td>
                 <td>${{ $factura->total }}</td>
                 <td>
-                    @if($factura->dias_restantes === null)
-                        <span class="badge bg-secondary">{{ $factura->estado_vencimiento }}</span>
-                    @elseif($factura->dias_restantes > 15)
+                    @if($factura->dias_restantes > 15)
                         <span class="badge bg-success">{{ $factura->dias_restantes }} días restantes</span>
                     @elseif($factura->dias_restantes > 7)
                         <span class="badge bg-primary">{{ $factura->dias_restantes }} días restantes</span>
@@ -70,6 +69,17 @@
                         <span class="badge bg-danger">{{ $factura->dias_restantes }} días restantes</span>
                     @else
                         <span class="badge bg-dark">Vencida</span>
+                    @endif
+                </td>
+                <td>
+                    @if($factura->estatus == 'PAGADO')
+                        <span class="badge bg-success">{{ $factura->estatus }}</span>
+                    @elseif($factura->estatus == 'PENDIENTE')
+                        <span class="badge bg-primary">{{ $factura->estatus }}</span>
+                    @elseif($factura->estatus == 'CANCELADO')
+                        <span class="badge bg-danger">{{ $factura->estatus }}</span>
+                    @else
+                        <span class="badge bg-dark">--</span>
                     @endif
                 </td>
                 <td>
@@ -656,6 +666,44 @@ $(function() {
         ordering: true,
         info: true,
         order: [[0, 'desc']],
+        dom: 'Bfrtip', // Define la posición de los botones
+        buttons: [
+            {
+                extend: 'excelHtml5',
+                text: 'Exportar a Excel',
+                className: 'btn btn-success',
+                title: 'Reporte_de_Facturacion', // Título del archivo
+                exportOptions: {
+                    columns: [0,1,2,3,4,5], // Exporta solo columnas visibles
+                    modifier: {
+                        page: 'all' // Exporta todos los registros (no solo la página actual)
+                    },
+                    format: {
+                body: function (data, row, column, node) {
+                    // Si 'data' viene como HTML, parseamos con el navegador para extraer texto
+                    let div = document.createElement("div");
+                    div.innerHTML = data;
+                    let cleanText = div.textContent || div.innerText || "";
+
+                    // Formatear como moneda la columna del total, mover el signo $ al inicio
+                    if (column === 3) {
+                        // Extraer número del texto
+                        let number = parseFloat(cleanText.replace(/[^\d.-]/g, ''));
+                        if (isNaN(number)) return cleanText; // Si no es número, lo dejamos igual
+
+                        // Formatear con separador de miles y 2 decimales
+                        return '$ ' + number.toLocaleString('en-US', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        });
+                    }
+
+                    return cleanText;
+                }
+            }
+                }
+            }
+        ],
       }).buttons().container().appendTo('#facturacionDataTable_wrapper .col-md-6:eq(0)');
 });
 </script>

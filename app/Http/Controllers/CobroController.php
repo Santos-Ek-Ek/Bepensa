@@ -44,14 +44,20 @@ class CobroController extends Controller
             if ($factura->vencimiento) {
                 $hoy = now();
                 $vencimiento = Carbon::parse($factura->vencimiento);
-                $factura->dias_restantes = $hoy->diffInDays($vencimiento, false); // false permite valores negativos
-            } else {
-                $factura->dias_restantes = null;
+                $diasCalculados = $hoy->diffInDays($vencimiento, false); // Calcula días con signo (puede ser negativo)
+                // Asignamos 0 si es negativo o cero, de lo contrario el valor positivo
+                $factura->dias_restantes = ($diasCalculados > 0) ? $diasCalculados : 0;
+
+                if ($hoy->greaterThan($vencimiento) && $factura->estatus === 'PENDIENTE') {
+                    $factura->estatus = 'CANCELADO';
+                }
+
+                // Cambiar estatus a CANCELADO si la fecha actual es POSTERIOR al vencimiento y NO es PAGADO
+                $factura->save();
             }
             
             return $factura;
         });
-        
 
         return view('cobro.cobro', compact('cobros'));
 
