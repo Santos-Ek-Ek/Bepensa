@@ -18,15 +18,18 @@
         <div class="col-md-4 align-self-end">
             <div class="row g-2">
                 <div class="col">
-                    <button type="submit" class="btn btn-primary w-100">Buscar</button>
+                    <button type="submit" id="submit-btn" class="btn btn-primary w-100" disabled>Buscar</button>
                 </div>
-                @if(request()->has('start_date') || request()->has('end_date'))
                 <div class="col">
-                    <a href="{{ url()->current() }}" class="btn btn-secondary w-100">Limpiar filtros</a>
+                <button type="button" id="clear-btn" class="btn btn-secondary w-100" onclick="window.location.href='{{ url()->current() }}'"
+                    @if(!request()->has('start_date') && !request()->has('end_date')) disabled @endif
+                >
+                    Limpiar filtros
+                </button>
                 </div>
-                @endif
             </div>
         </div>
+        <div id="validation-message" class="alert alert-warning mt-3 d-none" role="alert"></div>
     </form>
     </div>
 
@@ -236,6 +239,71 @@
     </div>
 
     <script>
+// Validación del filtros
+document.addEventListener('DOMContentLoaded', function() {
+    const startDateInput = document.getElementById('start-date');
+    const endDateInput = document.getElementById('end-date');
+    const submitBtn = document.getElementById('submit-btn');
+    const clearBtn = document.getElementById('clear-btn');
+    const validationMessage = document.getElementById('validation-message');
+    const form = document.getElementById('search-form');
+
+    function validateDates() {
+        const startDate = startDateInput.value;
+        const endDate = endDateInput.value;
+        
+        // Resetear mensaje y estado del botón
+        validationMessage.classList.add('d-none');
+        submitBtn.disabled = true;
+        
+        // Habilitar el botón de limpiar si hay algún cambio en las fechas (incluso si son inválidas)
+        if (startDate || endDate) {
+            clearBtn.disabled = false;
+        } else {
+            clearBtn.disabled = true;
+        }
+
+        // Validar si ambos campos están vacíos
+        if (!startDate && !endDate) {
+            return false;
+        }
+        
+        // Validar que la fecha de inicio no sea mayor que la de fin
+        if (startDate && endDate) {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            
+            if (start > end) {
+                validationMessage.textContent = 'La fecha de inicio no puede ser mayor que la fecha de fin.';
+                validationMessage.classList.remove('d-none');
+                submitBtn.disabled = true; // Deshabilitar solo el botón de búsqueda
+                clearBtn.disabled = false; // Asegurar que el botón de limpiar esté habilitado
+                return false;
+            }
+        }
+        
+        // Si pasa todas las validaciones
+        validationMessage.classList.add('d-none');
+        submitBtn.disabled = false;
+        clearBtn.disabled = false;
+        return true;
+    }
+
+    // Escuchar cambios en los campos de fecha
+    startDateInput.addEventListener('change', validateDates);
+    endDateInput.addEventListener('change', validateDates);
+
+    // Validar al cargar la página si hay valores
+    validateDates();
+
+    // Evitar envío del formulario si la validación falla
+    form.addEventListener('submit', function(e) {
+        if (!validateDates()) {
+            e.preventDefault();
+        }
+    });
+});
+
 document.addEventListener("DOMContentLoaded", function () {
     // Modal de visualización
     var viewModalInstance = new bootstrap.Modal(document.getElementById('verFacturacionModal'));
@@ -679,28 +747,28 @@ $(function() {
                         page: 'all' // Exporta todos los registros (no solo la página actual)
                     },
                     format: {
-                body: function (data, row, column, node) {
-                    // Si 'data' viene como HTML, parseamos con el navegador para extraer texto
-                    let div = document.createElement("div");
-                    div.innerHTML = data;
-                    let cleanText = div.textContent || div.innerText || "";
+                        body: function (data, row, column, node) {
+                            // Si 'data' viene como HTML, parseamos con el navegador para extraer texto
+                            let div = document.createElement("div");
+                            div.innerHTML = data;
+                            let cleanText = div.textContent || div.innerText || "";
 
-                    // Formatear como moneda la columna del total, mover el signo $ al inicio
-                    if (column === 3) {
-                        // Extraer número del texto
-                        let number = parseFloat(cleanText.replace(/[^\d.-]/g, ''));
-                        if (isNaN(number)) return cleanText; // Si no es número, lo dejamos igual
+                            // Formatear como moneda la columna del total, mover el signo $ al inicio
+                            if (column === 3) {
+                                // Extraer número del texto
+                                let number = parseFloat(cleanText.replace(/[^\d.-]/g, ''));
+                                if (isNaN(number)) return cleanText; // Si no es número, lo dejamos igual
 
-                        // Formatear con separador de miles y 2 decimales
-                        return '$ ' + number.toLocaleString('en-US', {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2
-                        });
+                                // Formatear con separador de miles y 2 decimales
+                                return '$ ' + number.toLocaleString('en-US', {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2
+                                });
+                            }
+
+                            return cleanText;
+                        }
                     }
-
-                    return cleanText;
-                }
-            }
                 }
             }
         ],
