@@ -6,6 +6,8 @@
       <h5 style="text-align: left; font-weight: bolder">Filtrar por:</h5>
       <form id="search-form" class="row g-3" style="gap: 0rem !important;" method="GET" action="{{ url()->current() }}">
         <div class="col-md-4">
+            <!-- Envía el parámetro de estatus para hacer 1 sola consulta -->
+            <input type="hidden" name="status" value="{{ request('status') }}">
             <label for="start-date" class="form-label">Fecha de inicio</label>
             <input type="date" id="start-date" name="start_date" class="form-control" 
                   value="{{ request('start_date') }}">
@@ -30,6 +32,25 @@
             </div>
         </div>
         <div id="validation-message" class="alert alert-warning mt-3 d-none" role="alert"></div>
+    </form>
+    <!-- Formulario para filtros de estatus -->
+    <form id="status-form" class="row g-3" style="gap: 0rem !important;" method="GET" action="{{ url()->current() }}">
+        <div class="col-md-4">
+            <label for="status" class="form-label">Estatus</label>
+            <select name="status" id="status" class="form-control form-select" onchange="this.form.submit()">
+                <option value="" {{ request('status') == '' ? 'selected' : '' }}>TODOS</option>
+                <option value="PENDIENTE" {{ request('status') == 'PENDIENTE' ? 'selected' : '' }}>PENDIENTE</option>
+                <option value="CANCELADO" {{ request('status') == 'CANCELADO' ? 'selected' : '' }}>CANCELADO</option>
+                <option value="PAGADO" {{ request('status') == 'PAGADO' ? 'selected' : '' }}>PAGADO</option>
+            </select>
+            <!-- Envía el parámetro de start_date y end_date para hacer 1 sola consulta -->
+            <input type="hidden" name="start_date" value="{{ request('start_date') }}">
+            <input type="hidden" name="end_date" value="{{ request('end_date') }}">
+        </div>
+        <div class="col-md-4">
+        </div>
+        <div class="col-md-4">
+        </div>
     </form>
     </div>
 

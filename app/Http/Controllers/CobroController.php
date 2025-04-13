@@ -39,6 +39,11 @@ class CobroController extends Controller
             $query->where('created_at', '<=', $request->end_date . ' 23:59:59');
         }
 
+        // Filtro por estatus (solo si se selecciona un valor diferente a "TODOS")
+        if ($request->filled('status') && $request->status != '') {
+            $query->where('estatus', $request->status);
+        }
+
         $cobros = $query->get()->map(function ($factura) {
             // Calcular días restantes si existe fecha de vencimiento
             if ($factura->vencimiento) {
