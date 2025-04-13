@@ -107,22 +107,24 @@
                     @endif
                 </td>
                 <td>
-                  <button class="btn btn-info btn-sm" onclick="abrirViewModal({{ json_encode($factura->load('productos.producto')) }})">
-                    <i class="fas fa-eye"></i>
-                  </button>
-                  <button onclick="generarPDF('{{ $factura->codigo }}')" class="btn btn-info btn-sm">
-    <i class="fas fa-file-pdf"></i>
-</button>
-                  <button class="btn btn-primary btn-sm" onclick="abrirEditModal({{ json_encode($factura->load('productos.producto')) }})">
-                      <i class="fas fa-pencil-alt"></i>
-                  </button>
-                  <form action="{{ route('facturacion.destroy', $factura->id) }}" method="POST" style="display:inline;">
-                      @csrf
-                      @method('DELETE')
-                      <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('¿Estás seguro de eliminar esta factura?')">
-                          <i class="fas fa-trash-alt"></i>
-                      </button>
-                  </form>
+                    <button class="btn btn-info btn-sm" title="Ver facturación" onclick="abrirViewModal({{ json_encode($factura->load('productos.producto')) }})">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="btn btn-info btn-sm" title="Generar PDF" onclick="generarPDF('{{ $factura->codigo }}')" >
+                        <i class="fas fa-file-pdf"></i>
+                    </button>
+                    @if ($factura->estatus === 'PENDIENTE')
+                    <button class="btn btn-primary btn-sm" title="Editar facturación" onclick="abrirEditModal({{ json_encode($factura->load('productos.producto')) }})">
+                        <i class="fas fa-pencil-alt"></i>
+                    </button>
+                    @endif
+                    <form action="{{ route('facturacion.destroy', $factura->id) }}" method="POST" style="display:inline;">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-danger btn-sm" title="Eliminar facturación" onclick="return confirm('¿Estás seguro de eliminar esta factura?')">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </form>
                 </td>
               </tr>
             @endforeach
