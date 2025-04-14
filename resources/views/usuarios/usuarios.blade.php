@@ -4,20 +4,14 @@
 
 <div class="container" id="usuario">
     <div class="card">
-        <div class="card-header" style="background-color: rgb(0, 174, 255);">
-          <h3 class="card-title"><b>USUARIOS</b></h3>
-            <div class="card-tools">
-            <div class="input-group input-group-sm" style="width: 150px;">
-              <div class="input-group-append">
-                <button type="button" class="btn btn" style="background-color: rgb(255, 255, 255)" data-toggle="modal" data-target="#exampleModal" v-on:click="mostrarModal()">
-                    <i class="fas fa-plus"></i>
-                    </button>
-              </div>
-            </div>
-          </div>
+        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <h3 class="card-title"><b>Lista de Usuarios</b></h3>
+            <button type="button" class="btn btn-primary" style="margin-left: auto;" data-toggle="modal" data-target="#exampleModal" v-on:click="mostrarModal()">
+                <i class="fas fa-plus"></i> Agregar usuario
+            </button>
         </div>
         <!-- /.card-header -->
-            <div class="card-body table-responsive p-0" style="height: 150px;">
+        <div class="card-body">
             <table id="usuarioTable" class="table table-bordered table-striped">
             <thead>
               <tr>
@@ -25,11 +19,11 @@
                 <th>Apellidos</th>
                 <th>Usuario</th>
                 <th>Contraseña</th>
-                <th></th>
+                <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
-                <tr v-for="usuario in usuarios">
+              <tr v-for="usuario in usuarios">
 
                 <td>@{{ usuario.nombre }}</td>
                 <td>@{{ usuario.apellidos }}</td>
@@ -41,7 +35,6 @@
                       </button>
                 </td>
               </tr>
-              <tr>
             </tbody>
           </table>
         </div>
