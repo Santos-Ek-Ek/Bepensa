@@ -153,12 +153,39 @@
               <input type="hidden" id="edit_facturacion_id" name="id">
               <div class="row">
                 <div class="mb-3 col-md-6">
-                  <label for="edit_codigo" class="form-label">Código</label>
+                  <label for="edit_codigo" class="form-label">Código:</label>
                   <input type="text" class="form-control" id="edit_codigo" name="codigo" required disabled>
                 </div>
                 <div class="mb-3 col-md-6">
-                  <label for="edit_total" class="form-label">Total</label>
-                  <input type="number" class="form-control" id="edit_total" name="total" required step="0.01" disabled>
+                  <label for="edit_cliente" class="form-label">Cliente:</label>
+                  <input type="text" class="form-control" id="edit_cliente" name="cliente" required disabled>
+                </div>
+              </div>
+              
+              <div class="row">
+                <div class="mb-3 col-md-6">
+                  <label for="edit_fecha" class="form-label">Fecha:</label>
+                  <input type="text" class="form-control" id="edit_fecha" name="fecha" required disabled>
+                </div>
+                <div class="mb-3 col-md-6">
+                  <label for="edit_total" class="form-label">Total:</label>
+                  <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    <input type="number" class="form-control" id="edit_total" name="total" required step="0.01" disabled>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="mb-3 col-md-6">
+                  <label for="edit_fecha" class="form-label">Estatus:</label>
+                  <select name="estatus" id="edit_estatus" class="form-control form-select">
+                      <option value="PENDIENTE">PENDIENTE</option>
+                      <option value="CANCELADO">CANCELADO</option>
+                      <option value="PAGADO">PAGADO</option>
+                  </select>
+                </div>
+                <div class="mb-3 col-md-6">
                 </div>
               </div>
               
@@ -236,6 +263,18 @@
                   <label class="form-label">Total:</label>
                   <input type="text" class="form-control" id="view_total" readonly>
                 </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">Estatus:</label>
+                  <div id="estatus-container">
+                    <!-- Aquí se insertará el badge dinámicamente -->
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
               </div>
             </div>
             
@@ -327,6 +366,30 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+// Función para mostrar el badge según el estatus
+function mostrarBadgeEstatus(estatus) {
+  const container = document.getElementById('estatus-container');
+  let badgeClass = '';
+  let texto = estatus || '--';
+  
+  switch(estatus) {
+    case 'PAGADO':
+      badgeClass = 'bg-success';
+      break;
+    case 'PENDIENTE':
+      badgeClass = 'bg-primary';
+      break;
+    case 'CANCELADO':
+      badgeClass = 'bg-danger';
+      break;
+    default:
+      badgeClass = 'bg-dark';
+      texto = '--';
+  }
+  
+  container.innerHTML = `<h5><span class="badge ${badgeClass}">${texto}</span></h5>`;
+}
+
 document.addEventListener("DOMContentLoaded", function () {
     // Modal de visualización
     var viewModalInstance = new bootstrap.Modal(document.getElementById('verFacturacionModal'));
@@ -341,6 +404,8 @@ document.addEventListener("DOMContentLoaded", function () {
     $('#view_codigo').val(factura.codigo || '');
     $('#view_cliente').val(factura.cliente ? `${factura.cliente.nombre_tienda} - ${factura.cliente.rfc}` : 'Cliente no disponible');
     $('#view_fecha').val(factura.created_at ? new Date(factura.created_at).toLocaleDateString() : '');
+    $('#view_estatus').val(factura.estatus || '');
+    mostrarBadgeEstatus(factura.estatus);
     $('#view_total').val(total ? `$${Number(total).toFixed(2)}` : '$0.00');
     
     // Llenar productos
@@ -404,6 +469,9 @@ window.cerrarViewModal = function() {
         $('#edit_facturacion_id').val(factura.id);
         $('#edit_codigo').val(factura.codigo);
         $('#edit_total').val(factura.total);
+        $('#edit_cliente').val(factura.cliente ? `${factura.cliente.nombre_tienda} - ${factura.cliente.rfc}` : 'Cliente no disponible');
+        $('#edit_fecha').val(factura.created_at ? new Date(factura.created_at).toLocaleDateString() : '');
+        $('#edit_estatus').val(factura.estatus);
 
         // Limpiar y reconstruir tabla de productos
         rebuildProductosTable(factura.productos);
@@ -655,6 +723,7 @@ $('#editFacturacionForm').off('submit').on('submit', function(e) {
             _method: 'PUT',
             codigo: $('#edit_codigo').val(),
             total: $('#edit_total').val(),
+            estatus: $('#edit_estatus').val(),
             productos: productos,
             nuevos_productos: nuevosProductos,
             productos_eliminados: productosEliminados

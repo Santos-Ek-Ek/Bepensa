@@ -46,7 +46,7 @@ class CobroController extends Controller
 
         $cobros = $query->get()->map(function ($factura) {
             // Calcular días restantes si existe fecha de vencimiento
-            if ($factura->vencimiento) {
+            if ($factura->vencimiento && $factura->estatus == 'PENDIENTE') {
                 $hoy = now();
                 $vencimiento = Carbon::parse($factura->vencimiento);
                 $diasCalculados = $hoy->diffInDays($vencimiento, false); // Calcula días con signo (puede ser negativo)
@@ -116,6 +116,10 @@ class CobroController extends Controller
             $factura = Facturacion::findOrFail($id);
             $factura->codigo = $request->codigo;
             $factura->total = $request->total;
+            $factura->estatus = $request->estatus;
+            if($request->estatus == 'CANCELADO' || $request->estatus == 'PAGADO'){
+                $factura->dias_restantes = 0;
+            }
             $factura->save();
     
             // 1. Manejar productos eliminados
