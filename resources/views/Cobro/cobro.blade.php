@@ -169,10 +169,7 @@
                 </div>
                 <div class="mb-3 col-md-6">
                   <label for="edit_total" class="form-label">Total:</label>
-                  <div class="input-group">
-                    <span class="input-group-text">$</span>
-                    <input type="number" class="form-control" id="edit_total" name="total" required step="0.01" disabled>
-                  </div>
+                  <input type="text" class="form-control" id="edit_total" name="total" required disabled>
                 </div>
               </div>
 
@@ -468,7 +465,7 @@ window.cerrarViewModal = function() {
         // Llenar datos básicos
         $('#edit_facturacion_id').val(factura.id);
         $('#edit_codigo').val(factura.codigo);
-        $('#edit_total').val(factura.total);
+        $('#edit_total').val('$' + Number(factura.total).toFixed(2)); // Añadir formato aquí
         $('#edit_cliente').val(factura.cliente ? `${factura.cliente.nombre_tienda} - ${factura.cliente.rfc}` : 'Cliente no disponible');
         $('#edit_fecha').val(factura.created_at ? new Date(factura.created_at).toLocaleDateString() : '');
         $('#edit_estatus').val(factura.estatus);
@@ -513,10 +510,10 @@ window.cerrarViewModal = function() {
                 tbody.append(`
                     <tr data-id="${p.id}" data-product-id="${p.producto_id}">
                         <td>${p.codigo} - ${p.nombre}</td>
-                        <td class="precio">${p.precio}</td>
+                        <td class="precio">$${Number(p.precio).toFixed(2)}</td>
                         <td><input type="number" class="form-control cantidad" 
                               value="${p.cantidad}" min="1"></td>
-                        <td class="subtotal">${subtotal}</td>
+                        <td class="subtotal">$${subtotal}</td>
                         <td>
                           <button type="button" class="btn btn-danger btn-sm btn-eliminar-producto">
                             <i class="fas fa-trash-alt"></i>
@@ -554,10 +551,11 @@ window.cerrarViewModal = function() {
         // Eventos de cambio
         $('#productosDataTable').off('change', '.cantidad').on('change', '.cantidad', function() {
             const row = $(this).closest('tr');
-            const precio = parseFloat(row.find('.precio').text());
+            const precioText = row.find('.precio').text().replace(/[^\d.-]/g, '');
+            const precio = parseFloat(precioText) || 0;
             const cantidad = parseInt($(this).val()) || 0;
             const subtotal = (precio * cantidad).toFixed(2);
-            row.find('.subtotal').text(subtotal);
+            row.find('.subtotal').text('$' + subtotal);
             updateTotal();
         });
     }
@@ -621,9 +619,9 @@ window.cerrarViewModal = function() {
             const newRow = `
                 <tr data-product-id="${selectedProduct.id}">
                     <td>${selectedProduct.nombre}</td>
-                    <td class="precio">${selectedProduct.precio}</td>
+                    <td class="precio">$${Number(selectedProduct.precio).toFixed(2)}</td>
                     <td><input type="number" class="form-control cantidad" value="1" min="1"></td>
-                    <td class="subtotal">${selectedProduct.precio}</td>
+                    <td class="subtotal">$${Number(selectedProduct.precio).toFixed(2)}</td>
                     <td>
                       <button type="button" class="btn btn-danger btn-sm btn-eliminar-producto">
                         <i class="fas fa-trash-alt"></i>
@@ -644,11 +642,11 @@ window.cerrarViewModal = function() {
     // Modificar la función updateTotal para ignorar filas ocultas
     function updateTotal() {
         let total = 0;
-        $('#productos-tbody tr:visible').each(function() { // Solo filas visibles
-            const subtotalText = $(this).find('.subtotal').text();
+        $('#productos-tbody tr:visible').each(function() {
+            const subtotalText = $(this).find('.subtotal').text().replace(/[^\d.-]/g, '');
             total += parseFloat(subtotalText) || 0;
         });
-        $('#edit_total').val(total.toFixed(2));
+        $('#edit_total').val('$' + total.toFixed(2));
     }
 
     window.cerrarEditModal = function() {
@@ -690,7 +688,8 @@ $('#editFacturacionForm').off('submit').on('submit', function(e) {
             });
         } else {
             const cantidad = parseInt(row.find('.cantidad').val()) || 0;
-            const precio = parseFloat(row.find('.precio').text());
+            const precioText = row.find('.precio').text().replace('$', '').trim();
+            const precio = parseFloat(precioText) || 0;
             
             if(cantidad <= 0) {
                 mostrarErrorEnModal('La cantidad debe ser mayor a 0');
@@ -714,6 +713,9 @@ $('#editFacturacionForm').off('submit').on('submit', function(e) {
 
     // Limpiar errores previos
     $('#modal-error-message').remove();
+
+    const totalText =  $('#edit_total').val().replace(/[^\d.-]/g, '');
+    const total = parseFloat(totalText) || 0;
     
     $.ajax({
         url: `/facturas/${$('#edit_facturacion_id').val()}`,
@@ -722,7 +724,7 @@ $('#editFacturacionForm').off('submit').on('submit', function(e) {
             _token: $('[name="_token"]').val(),
             _method: 'PUT',
             codigo: $('#edit_codigo').val(),
-            total: $('#edit_total').val(),
+            total: total,
             estatus: $('#edit_estatus').val(),
             productos: productos,
             nuevos_productos: nuevosProductos,
