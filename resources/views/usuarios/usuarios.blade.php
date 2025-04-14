@@ -78,4 +78,18 @@
 @endsection
 @push('scripts')
 <script src="dist/js/usuarios/usuario.js"></script>
+<script>
+$(document).ready(function() {
+    $("#usuarioTable").DataTable({
+        "responsive": true,
+        "lengthChange": false, 
+        "autoWidth": false,
+        'paging': true,
+        "pageLength": 10,
+        'searching'   : true,
+        'ordering'    : true,
+        'info'        : true,
+    }).buttons().container().appendTo('#usuarioTable_wrapper .col-md-6:eq(0)');
+});
+</script>
 @endpush
