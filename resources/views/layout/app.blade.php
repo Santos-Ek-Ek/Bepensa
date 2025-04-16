@@ -136,6 +136,8 @@
                         </p>
                       </a>
                     </li>
+                    @if (Session::get('rol') === 'Administrador')
+                    
                     <li class="nav-item menu-open">
                       <a href="#" class="nav-link active">
                         <i class="nav-icon fas fa-cog"></i>
@@ -197,7 +199,7 @@
                         </li>
                       </ul>
                     </li>
-
+                    @endif
                     <!--Inventario-->
                     <li class="nav-item menu-open" hidden>
                       <a href="#" class="nav-link active">

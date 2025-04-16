@@ -38,9 +38,9 @@ Route::get('productos', function(){
     return view('inventario.productos');
 });
 
-Route::get('usuarios', function(){
-    return view('usuarios.usuarios');
-});
+// Route::get('usuarios', function(){
+//     return view('usuarios.usuarios');
+// });
 
 Route::get('proveedores', function(){
     return view('proveedores.proveedores');
@@ -122,3 +122,7 @@ Route::put('/facturas/{id}', [CobroController::class, 'update']);
 Route::delete('/facturas/{id}', [CobroController::class, 'destroy'])->name('facturacion.destroy');
 
 Route::get('/facturas/pdf/{codigo}', [CobroController::class, 'generarPdf'])->name('facturas.pdf');
+
+Route::get('usuarios', [UsuarioController::class,'index']);
+Route::put('/usuarios/{id}', [UsuarioController::class, 'destroy'])->name('usuarios.eliminar');
+Route::post('/usuarios', [UsuarioController::class, 'store'])->name('usuarios.agregar');

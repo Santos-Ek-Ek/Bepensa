@@ -58,9 +58,11 @@
     <div class="card">
       <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
         <h3 class="card-title" style="font-weight: bolder">Lista de Facturas</h3>
+        @if (Session::get('rol') === 'Administrador')
         <a href="{{ route('nueva-facturacion') }}" class="btn btn-primary" style="margin-left: auto;">
           Agregar Factura
         </a>
+        @endif
       </div>
       <div class="card-body">
         <table class="table table-bordered table-striped" id="facturacionDataTable">
@@ -113,6 +115,7 @@
                     <button class="btn btn-info btn-sm" title="Generar PDF" onclick="generarPDF('{{ $factura->codigo }}')" >
                         <i class="fas fa-file-pdf"></i>
                     </button>
+                    @if (Session::get('rol') === 'Administrador')
                     @if ($factura->estatus === 'PENDIENTE')
                     <button class="btn btn-primary btn-sm" title="Editar facturación" onclick="abrirEditModal({{ json_encode($factura->load('productos.producto')) }})">
                         <i class="fas fa-pencil-alt"></i>
@@ -125,6 +128,7 @@
                             <i class="fas fa-trash-alt"></i>
                         </button>
                     </form>
+                    @endif
                 </td>
               </tr>
             @endforeach
