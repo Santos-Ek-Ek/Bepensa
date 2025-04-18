@@ -22,7 +22,7 @@ class LoginController extends Controller
         ]);
     
         // Buscar el usuario (sin la contraseña primero para evitar timing attacks)
-        $usuario = Usuario::where('usuario', $request->usuario)->first();
+        $usuario = Usuario::where('usuario', $request->usuario)->where('activo', 1)->first();
     
         // Verificar si el usuario existe y la contraseña es correcta
         if ($usuario && $this->verificarCredenciales($usuario, $request->password)) {

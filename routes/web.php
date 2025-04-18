@@ -126,3 +126,4 @@ Route::get('/facturas/pdf/{codigo}', [CobroController::class, 'generarPdf'])->na
 Route::get('usuarios', [UsuarioController::class,'index']);
 Route::put('/usuarios/{id}', [UsuarioController::class, 'destroy'])->name('usuarios.eliminar');
 Route::post('/usuarios', [UsuarioController::class, 'store'])->name('usuarios.agregar');
+Route::put('/usuarios-editar/{id}', [UsuarioController::class, 'update'])->name('actualizar-usuario');

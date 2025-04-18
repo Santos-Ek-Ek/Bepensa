@@ -108,6 +108,45 @@ class UsuarioController extends Controller
     public function update(Request $request, $id)
     {
         //
+        $request->validate([
+            'nombre' => 'required|string|max:255',
+            'apellidos' => 'required|string|max:255',
+            'usuario' => 'required|string|max:255|unique:usuarios,usuario,' . $id,
+            'password' => 'nullable|string|min:8',
+            'rol' => 'required|in:Administrador,Usuario'
+        ], [
+            'nombre.required' => 'El nombre es obligatorio',
+            'apellidos.required' => 'Los apellidos es obligatorio',
+            'usuario.required' => 'El usuario es obligatorio',
+            'rol.required' => 'El rol es obligatorio' 
+        ]);
+    
+        try {
+            $usuario = Usuario::find($id);
+            $usuario->nombre = $request->nombre;
+            $usuario->apellidos = $request->apellidos;
+            $usuario->usuario = $request->usuario;
+            $usuario->rol = $request->rol;
+        
+            // Solo actualiza la contraseña si se escribió
+            if ($request->filled('password')) {
+                $usuario->password = Hash::make($request->password);
+            }
+
+            $usuario->save();
+    
+            return response()->json([
+                'success' => true,
+                'message' => 'Usuario actualizado correctamente',
+                'usuario' => $usuario
+            ]);
+    
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al guardar el usuario: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
