@@ -36,7 +36,7 @@ class ClienteController extends Controller
         ], [
             'nombre_tienda.required' => 'El nombre de la tienda es obligatorio',
             'propietario.required' => 'El propietario es obligatorio',
-            'cod_cte' => 'El código cte es obligatorio',
+            'cod_cte.required' => 'El código cte es obligatorio',
             'rfc.required' => 'El RFC es obligatorio',
             'rfc.size' => 'El RFC debe tener 12 caracteres (Persona Moral) o 13 caracteres (Persona Física) y un formato válido',
             'rfc.regex' => 'El RFC no tiene un formato válido.',

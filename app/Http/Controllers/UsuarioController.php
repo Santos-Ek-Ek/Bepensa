@@ -44,6 +44,12 @@ class UsuarioController extends Controller
             'usuario' => 'required|string|max:255|unique:usuarios',
             'password' => 'required|string|min:8',
             'rol' => 'required|in:Administrador,Usuario'
+        ], [
+            'nombre.required' => 'El nombre es obligatorio',
+            'apellidos.required' => 'Los apellidos es obligatorio',
+            'usuario.required' => 'El usuario es obligatorio',
+            'password.required' => 'La contraseña es obligatoria',
+            'rol.required' => 'El rol es obligatorio' 
         ]);
     
         try {
