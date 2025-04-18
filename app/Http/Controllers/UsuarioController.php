@@ -6,6 +6,7 @@ use App\Models\Usuario;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 class UsuarioController extends Controller
 {
@@ -41,13 +42,21 @@ class UsuarioController extends Controller
         $request->validate([
             'nombre' => 'required|string|max:255',
             'apellidos' => 'required|string|max:255',
-            'usuario' => 'required|string|max:255|unique:usuarios',
+            'usuario' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('usuarios')->where(function ($query) {
+                    return $query->where('activo', 1);
+                })
+            ],
             'password' => 'required|string|min:8',
             'rol' => 'required|in:Administrador,Usuario'
         ], [
             'nombre.required' => 'El nombre es obligatorio',
             'apellidos.required' => 'Los apellidos es obligatorio',
             'usuario.required' => 'El usuario es obligatorio',
+            'usuario.unique' => 'Ya existe un usuario activo con ese nombre',
             'password.required' => 'La contraseña es obligatoria',
             'rol.required' => 'El rol es obligatorio' 
         ]);
