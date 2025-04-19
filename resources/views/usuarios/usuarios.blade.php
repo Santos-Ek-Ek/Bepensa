@@ -16,6 +16,7 @@
                 <thead>
                     <tr>
                         <th>Nombre</th>
+                        <th>Correo</th>
                         <th>Usuario</th>
                         <th>Contraseña</th>
                         <th>Rol</th>
@@ -26,6 +27,7 @@
                     @foreach ($usuarios as $usuario)
                     <tr id="usuario-{{ $usuario->id }}">
                         <td>{{ $usuario->nombre }} {{ $usuario->apellidos }}</td>
+                        <td>{{ $usuario->correo }}</td>
                         <td>{{ $usuario->usuario }}</td>
                         <td>************</td>
                         <td>{{ $usuario->rol }}</td>
@@ -67,6 +69,11 @@
                                 <label for="">Apellidos</label>
                                 <input type="text" class="form-control" placeholder="Apellidos" name="apellidos">
                                 <small class="text-danger d-none" id="error_apellidos"></small>
+                            </div>
+                            <div class="form-group">
+                                <label for="">Correo</label>
+                                <input type="text" class="form-control" placeholder="Correo" name="correo">
+                                <small class="text-danger d-none" id="error_correo"></small>
                             </div>
                             <div class="form-group">
                                 <label for="">Usuario</label>
@@ -119,6 +126,11 @@
                         <label>Apellidos</label>
                         <input type="text" class="form-control" id="edit_apellidos" name="apellidos">
                         <small id="edit_error_apellidos" class="text-danger d-none"></small>
+                    </div>
+                    <div class="form-group">
+                        <label>Correo</label>
+                        <input type="text" class="form-control" id="edit_correo" name="correo">
+                        <small id="edit_error_correo" class="text-danger d-none"></small>
                     </div>
                     <div class="form-group">
                         <label>Usuario</label>
@@ -217,6 +229,9 @@
                         if (errors.apellidos) {
                             $("#error_apellidos").text(errors.apellidos[0]).removeClass("d-none");
                         }
+                        if (errors.correo) {
+                            $("#error_correo").text(errors.correo[0]).removeClass("d-none");
+                        }
                         if (errors.usuario) {
                             $("#error_usuario").text(errors.usuario[0]).removeClass("d-none");
                         }
@@ -236,6 +251,7 @@
             document.getElementById("edit_nombre").value = usuario.id;
             document.getElementById("edit_nombre").value = usuario.nombre;
             document.getElementById("edit_apellidos").value = usuario.apellidos;
+            document.getElementById("edit_correo").value = usuario.correo;
             document.getElementById("edit_usuario").value = usuario.usuario;
             document.getElementById("edit_password").value = '';
             document.getElementById("edit_rol").value = usuario.rol;
@@ -273,6 +289,9 @@
                         }
                         if (errors.apellidos) {
                             $("#edit_error_apellidos").text(errors.apellidos[0]).removeClass("d-none");
+                        }
+                        if (errors.correo) {
+                            $("#edit_error_correo").text(errors.correo[0]).removeClass("d-none");
                         }
                         if (errors.usuario) {
                             $("#edit_error_usuario").text(errors.usuario[0]).removeClass("d-none");

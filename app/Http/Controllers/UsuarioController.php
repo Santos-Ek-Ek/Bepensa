@@ -42,6 +42,15 @@ class UsuarioController extends Controller
         $request->validate([
             'nombre' => 'required|string|max:255',
             'apellidos' => 'required|string|max:255',
+            'correo'=> [
+                'required',
+                'string',
+                'email',
+                'regex:/^[\w\.\-]+@[\w\-]+(\.[a-zA-Z]{3,})+$/',
+                Rule::unique('usuarios')->where(function ($query) {
+                    return $query->where('activo', 1);
+                })
+            ],
             'usuario' => [
                 'required',
                 'string',
@@ -55,8 +64,12 @@ class UsuarioController extends Controller
         ], [
             'nombre.required' => 'El nombre es obligatorio',
             'apellidos.required' => 'Los apellidos es obligatorio',
+            'correo.required' => 'El correo es obligatorio',
+            'correo.email' => 'El correo electrónico debe ser una dirección válida',
+            'correo.regex' => 'El correo debe contener un dominio con extensión como ".com.mx", ".org", etc.',
+            'correo.unique' => 'Ya existe un usuario activo con ese correo',
             'usuario.required' => 'El usuario es obligatorio',
-            'usuario.unique' => 'Ya existe un usuario activo con ese nombre',
+            'usuario.unique' => 'Ya existe un usuario activo con ese nombre de usuario',
             'password.required' => 'La contraseña es obligatoria',
             'rol.required' => 'El rol es obligatorio' 
         ]);
@@ -120,13 +133,19 @@ class UsuarioController extends Controller
         $request->validate([
             'nombre' => 'required|string|max:255',
             'apellidos' => 'required|string|max:255',
+            'correo' => 'required|string|email|regex:/^[\w\.\-]+@[\w\-]+(\.[a-zA-Z]{3,})+$/|unique:usuarios,correo,' . $id,
             'usuario' => 'required|string|max:255|unique:usuarios,usuario,' . $id,
             'password' => 'nullable|string|min:8',
             'rol' => 'required|in:Administrador,Usuario'
         ], [
             'nombre.required' => 'El nombre es obligatorio',
             'apellidos.required' => 'Los apellidos es obligatorio',
+            'correo.required' => 'El correo es obligatorio',
+            'correo.email' => 'El correo electrónico debe ser una dirección válida',
+            'correo.regex' => 'El correo debe contener un dominio con extensión como ".com.mx", ".org", etc.',
+            'correo.unique' => 'Ya existe un usuario activo con ese correo',
             'usuario.required' => 'El usuario es obligatorio',
+            'usuario.unique' => 'Ya existe un usuario activo con ese nombre de usuario',
             'rol.required' => 'El rol es obligatorio' 
         ]);
     
@@ -134,6 +153,7 @@ class UsuarioController extends Controller
             $usuario = Usuario::find($id);
             $usuario->nombre = $request->nombre;
             $usuario->apellidos = $request->apellidos;
+            $usuario->correo = $request->correo;
             $usuario->usuario = $request->usuario;
             $usuario->rol = $request->rol;
         
