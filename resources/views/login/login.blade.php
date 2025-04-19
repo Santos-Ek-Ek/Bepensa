@@ -25,23 +25,38 @@
     <div class="card-body">
       <p class="login-box-msg h4">Iniciar sesión</p>
 
+      @if ($errors->has('credenciales'))
+        <div class="alert alert-danger text-center">
+          {{ $errors->first('credenciales') }}
+        </div>
+      @endif
       <form action="{{ url('login') }}" method="post">
         @csrf
-        <div class="input-group mb-3">
-          <input type="text" class="form-control" placeholder="Usuario" name="usuario">
-          <div class="input-group-append">
-            <div class="input-group-text">
-              <span class="fas fa-user"></span>
+        <div class="form-group">
+          <div class="input-group">
+            <input type="text" class="form-control" placeholder="Usuario" name="usuario">
+            <div class="input-group-append">
+              <div class="input-group-text">
+                <span class="fas fa-user"></span>
+              </div>
             </div>
           </div>
+          @error('usuario')
+            <div class="text-danger small">{{ $message }}</div>
+          @enderror
         </div>
-        <div class="input-group mb-3">
-          <input type="password" class="form-control" placeholder="Password" name="password">
-          <div class="input-group-append">
-            <div class="input-group-text">
-              <span class="fas fa-lock"></span>
+        <div class="form-group">
+          <div class="input-group">
+            <input type="password" class="form-control" placeholder="Password" name="password">
+            <div class="input-group-append">
+              <div class="input-group-text">
+                <span class="fas fa-lock"></span>
+              </div>
             </div>
           </div>
+          @error('password')
+            <div class="text-danger small">{{ $message }}</div>
+          @enderror
         </div>
         <div class="row">
           <div class="col-2">

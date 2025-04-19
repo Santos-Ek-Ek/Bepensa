@@ -19,6 +19,9 @@ class LoginController extends Controller
         $request->validate([
             'usuario' => 'required|string',
             'password' => 'required|string'
+        ], [
+            'usuario.required' => 'El campo usuario es obligatorio',
+            'password.required' => 'El campo contraseña es obligatorio',
         ]);
     
         // Buscar el usuario (sin la contraseña primero para evitar timing attacks)
