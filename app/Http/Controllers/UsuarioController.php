@@ -46,7 +46,7 @@ class UsuarioController extends Controller
                 'required',
                 'string',
                 'email',
-                'regex:/^[\w\.\-]+@[\w\-]+(\.[a-zA-Z]{3,})+$/',
+                'regex:/^[\w\.\-]+@[\w\-]+(\.[a-zA-Z]{2,})+$/',
                 Rule::unique('usuarios')->where(function ($query) {
                     return $query->where('activo', 1);
                 })
@@ -133,7 +133,7 @@ class UsuarioController extends Controller
         $request->validate([
             'nombre' => 'required|string|max:255',
             'apellidos' => 'required|string|max:255',
-            'correo' => 'required|string|email|regex:/^[\w\.\-]+@[\w\-]+(\.[a-zA-Z]{3,})+$/|unique:usuarios,correo,' . $id,
+            'correo' => 'required|string|email|regex:/^[\w\.\-]+@[\w\-]+(\.[a-zA-Z]{2,})+$/|unique:usuarios,correo,' . $id,
             'usuario' => 'required|string|max:255|unique:usuarios,usuario,' . $id,
             'password' => 'nullable|string|min:8',
             'rol' => 'required|in:Administrador,Usuario'
