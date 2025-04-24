@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Session;
 
 class CobroController extends Controller
 {
@@ -189,6 +190,14 @@ class CobroController extends Controller
             }
     
             DB::commit();
+
+            // Envío de correo cuando se actualiza el estatus
+            if($request->estatus == 'CANCELADO' || $request->estatus == 'PAGADO'){
+                if(Session::get('usuario')) {
+                    $facturacionController = new FacturacionController();
+                    $facturacionController->generarCorreoEstatus(Session::get('usuario_id'), $id);
+                }
+            }
     
             return response()->json([
                 'success' => true, 
