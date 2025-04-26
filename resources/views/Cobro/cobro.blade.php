@@ -238,7 +238,7 @@
               <!-- Contenedor para el mensaje de bloqueo -->
               <div id="mensaje-bloqueo-container" class="mt-2" style="display: none;">
                   <div class="alert alert-warning" style="background-color: #343a40 !important; color: #ffffff !important; border-color: #343a40 !important;">
-                      Los productos no pueden modificarse
+                      Los productos pueden modificarse solamente si el estatus es PENDIENTE
                   </div>
               </div>
             </div>
