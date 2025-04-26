@@ -65,6 +65,32 @@ class CobroController extends Controller
             return $factura;
         });
 
+        // Lógica para el envío de noticaciones
+        $cobros = $query->get()->map(function ($factura) {
+            // $factura->notificacion_enviada_fecha = null;
+            // $factura->save();
+            $horaNotificacion = now()->setTime(12, 0, 0); // Hoy a las 12:00 p. m.
+            $ahora = now();
+            $hoy = $ahora->toDateString(); // Solo fecha
+        
+            // Si ya es después de las 12 y no se ha enviado hoy
+            if ($ahora->greaterThanOrEqualTo($horaNotificacion) && $factura->notificacion_enviada_fecha !== $hoy && $factura->estatus === 'PENDIENTE' && in_array($factura->dias_restantes, [15, 7, 3])) {
+                // Aquí tu lógica de envío
+                if(Session::get('usuario')) {
+                    $facturacion_correo = new FacturacionController();
+                    $facturacion_correo->generarCorreoEstatus(Session::get('usuario_id'), $factura->id);
+                }
+        
+                // Guardamos que hoy ya se envió
+                $factura->notificacion_enviada_fecha = $hoy;
+                $factura->save();
+        
+                logger("Correo enviado hoy ({$hoy}) para factura ID: {$factura->id}");
+            }
+        
+            return $factura;
+        });
+
         return view('cobro.cobro', compact('cobros'));
 
     }

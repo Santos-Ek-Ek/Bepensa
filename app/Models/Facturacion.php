@@ -19,6 +19,7 @@ class Facturacion extends Model
         'vencimiento',
         'dias_restantes',
         'estatus',
+        'notificacion_hoy',
         'activo'
     ];
 
