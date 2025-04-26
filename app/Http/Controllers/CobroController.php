@@ -56,6 +56,12 @@ class CobroController extends Controller
 
                 if ($hoy->greaterThan($vencimiento) && $factura->estatus === 'PENDIENTE') {
                     $factura->estatus = 'CANCELADO';
+                    $factura->save();
+                    if(Session::get('usuario')) {
+                        $facturacion_correo = new FacturacionController();
+                        $facturacion_correo->generarCorreoEstatus(Session::get('usuario_id'), $factura->id);
+                        logger("Correo cancelado y pendiente hoy ({$hoy}) y notificación enviada para factura ID: {$factura->id}");
+                    }
                 }
 
                 // Cambiar estatus a CANCELADO si la fecha actual es POSTERIOR al vencimiento y NO es PAGADO
@@ -85,7 +91,7 @@ class CobroController extends Controller
                 $factura->notificacion_enviada_fecha = $hoy;
                 $factura->save();
         
-                logger("Correo enviado hoy ({$hoy}) para factura ID: {$factura->id}");
+                logger("Correo enviado hoy ({$hoy}) y notificación enviada para factura ID: {$factura->id}");
             }
         
             return $factura;

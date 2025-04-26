@@ -1,6 +1,23 @@
 @extends('layout.app')
 @section('content')
 <div style="margin: 1rem">
+  <style>
+    /* Estilos para los controles deshabilitados */
+    #buscarProducto:disabled,
+    #agregarProductoBtn:disabled,
+    .cantidad:disabled,
+    .btn-eliminar-producto:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    /* Estilo para el mensaje de bloqueo */
+    #mensaje-bloqueo-container .alert {
+        margin-bottom: 0; /* Elimina el margen inferior por defecto */
+        border-radius: 0 0 0.25rem 0.25rem; /* Coincide con el radio de borde de la tabla */
+        border-top: none; /* Elimina el borde superior para que parezca parte de la tabla */
+    }
+  </style>
     <!-- Buscar facturas -->
     <div class="">
       <h5 style="text-align: left; font-weight: bolder">Filtrar por:</h5>
@@ -218,6 +235,12 @@
                       <!-- Aquí se llenarán los productos con JS -->
                   </tbody>
               </table>
+              <!-- Contenedor para el mensaje de bloqueo -->
+              <div id="mensaje-bloqueo-container" class="mt-2" style="display: none;">
+                  <div class="alert alert-warning" style="background-color: #343a40 !important; color: #ffffff !important; border-color: #343a40 !important;">
+                      Los productos no pueden modificarse
+                  </div>
+              </div>
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" onclick="cerrarEditModal()">Cerrar</button>
@@ -482,8 +505,38 @@ window.cerrarViewModal = function() {
         $('#sugerencias').hide().empty();
         selectedProduct = null;
 
+        // Ocultar mensaje al abrir el modal (se mostrará si corresponde con el change)
+        $('#mensaje-bloqueo-container').hide();
+        
+        // Disparar evento change para configurar estado inicial
+        $('#edit_estatus').trigger('change');
+
         editModalInstance.show();
     };
+
+    // Evento change para el select de estatus
+    $('#edit_estatus').off('change').on('change', function() {
+        const estatus = $(this).val();
+        const estatusBloqueado = ['CANCELADO', 'PAGADO'].includes(estatus);
+        
+        // Deshabilitar/habilitar elementos de búsqueda
+        $('#buscarProducto').prop('disabled', estatusBloqueado);
+        $('#agregarProductoBtn').prop('disabled', estatusBloqueado);
+        
+        // Deshabilitar controles en la tabla
+        $('.cantidad').prop('disabled', estatusBloqueado);
+        $('.btn-eliminar-producto').prop('disabled', estatusBloqueado);
+        
+        // Mostrar/ocultar mensaje
+        const mensajeContainer = $('#mensaje-bloqueo-container');
+        if (estatusBloqueado) {
+            mensajeContainer.show();
+        } else {
+            mensajeContainer.hide();
+        }
+    });
+
+    // ... (resto del código existente)
 
     function rebuildProductosTable(productos) {
         const tbody = $('#productos-tbody');

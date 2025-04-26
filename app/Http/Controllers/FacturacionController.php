@@ -95,7 +95,9 @@ class FacturacionController extends Controller
         DB::commit();
 
         if(Session::get('usuario')) {
+            $hoy = now();
             $this->generarCorreoEstatus(Session::get('usuario_id'), $facturacion->id);
+            logger("Correo creado ({$hoy}) y notificación enviada para factura ID: {$facturacion->id}");
         }
 
         return redirect()->route('cobro')->with('success', 'Facturación creada exitosamente.');
