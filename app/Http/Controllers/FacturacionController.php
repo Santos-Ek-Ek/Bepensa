@@ -100,7 +100,7 @@ class FacturacionController extends Controller
             logger("Correo creado ({$hoy}) y notificación enviada para factura ID: {$facturacion->id}");
         }
 
-        return redirect()->route('cobro')->with('success', 'Facturación creada exitosamente.');
+        return redirect()->route('cobro.index')->with('success', 'Facturación creada exitosamente.');
 
     } catch (\Exception $e) {
         DB::rollBack();
