@@ -35,9 +35,11 @@
                             <button class="btn btn-primary btn-sm" title="Editar facturación" onclick="abrirEditModal({{ $usuario }})">
                                 <i class="fas fa-pencil-alt"></i>
                             </button>
-                            <button class="btn btn-danger btn-sm btn-eliminar" data-id="{{ $usuario->id }}">
+                            @if($usuario->id != 1 || $usuario->id != 2 || $usuario->id != 3)
+                            <button class="btn btn-danger btn-sm btn-eliminar" data-id="{{ $usuario->id }}"  @if(in_array($usuario->id, [1, 2, 3])) disabled @endif>
                                 <i class="fas fa-trash-alt"></i>
                             </button>
+                            @endif
                         </td>
                     </tr>
                     @endforeach
