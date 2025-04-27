@@ -18,7 +18,7 @@
 <body class="hold-transition login-page">
 <div class="login-box">
   <!-- /.login-logo -->
-  <div class="card card-outline card-warning">
+  <div class="card card-outline card-warning" style="border-top: 3px solid #6c757d !important;">
     <div class="card-header text-center">
       <a href="#" class="h1"><img src="dist/img/logo.png" alt=""></a>
     </div>
@@ -46,11 +46,11 @@
           @enderror
         </div>
         <div class="form-group">
-          <div class="input-group">
-            <input type="password" class="form-control" placeholder="Password" name="password">
+          <div class="input-group"  id="show_hide_password">
+            <input type="password" class="form-control" placeholder="Password" name="password" id="password-field">
             <div class="input-group-append">
               <div class="input-group-text">
-                <span class="fas fa-lock"></span>
+                <a href="#" id="toggle-password" style="color: inherit;"><i class="fas fa-eye" id="eye-icon"></i></a>
               </div>
             </div>
           </div>
@@ -83,5 +83,21 @@
 <script src="plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
 <!-- AdminLTE App -->
 <script src="dist/js/adminlte.min.js"></script>
+<script>
+  $(document).ready(function() {
+    $('#toggle-password').on('click', function(e) {
+      e.preventDefault();
+      var passwordInput = $('#password-field');
+      var eyeIcon = $('#eye-icon');
+      if (passwordInput.attr('type') === 'password') {
+        passwordInput.attr('type', 'text');
+        eyeIcon.removeClass('fa-eye').addClass('fa-eye-slash');
+      } else {
+        passwordInput.attr('type', 'password');
+        eyeIcon.removeClass('fa-eye-slash').addClass('fa-eye');
+      }
+    });
+  });
+</script>
 </body>
 </html>
