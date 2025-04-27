@@ -1,6 +1,6 @@
 <?php
 $host = 'localhost';
-$db = 'sistema_cobro';
+$db = 'bepensa';
 $user = 'root'; // Cambia según tu configuración
 $password = ''; // Cambia según tu configuración
 
