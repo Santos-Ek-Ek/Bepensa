@@ -206,17 +206,24 @@
                 <div class="mb-3 col-md-6">
                 </div>
               </div>
+
+              <!-- Contenedor para el mensaje de bloqueo -->
+              <div id="mensaje-bloqueo-container" class="mb-2" style="display: none;">
+                  <div class="alert alert-warning" style="background-color: #343a40 !important; color: #ffffff !important; border-color: #343a40 !important;">
+                      Solo podrá añadir, modificar la cantidad o eliminar un producto si el estatus es PENDIENTE
+                  </div>
+              </div>
               
               <!-- Add Product Search -->
               <div class="row mb-3">
-                <div class="col-md-8" style="position: relative;">
+                <div class="col-md-8 mb-2" style="position: relative;">
                   <label for="producto" class="form-label">Buscar Producto</label>
                   <input type="text" id="buscarProducto" class="form-control" placeholder="Ingrese código o nombre">
                   <select id="sugerencias" class="form-select mt-2" size="5" 
                       style="display: none; position: absolute; width: 100%; top: 100%; left: 0; z-index: 1000;">
                   </select>
                 </div>
-                <div class="col-md-4 d-flex align-items-end">
+                <div class="col-md-4 d-flex align-items-end mb-2">
                   <button type="button" id="agregarProductoBtn" class="btn btn-primary">Agregar Producto</button>
                 </div>
               </div>
@@ -235,12 +242,6 @@
                       <!-- Aquí se llenarán los productos con JS -->
                   </tbody>
               </table>
-              <!-- Contenedor para el mensaje de bloqueo -->
-              <div id="mensaje-bloqueo-container" class="mt-2" style="display: none;">
-                  <div class="alert alert-warning" style="background-color: #343a40 !important; color: #ffffff !important; border-color: #343a40 !important;">
-                      Los productos pueden modificarse solamente si el estatus es PENDIENTE
-                  </div>
-              </div>
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" onclick="cerrarEditModal()">Cerrar</button>

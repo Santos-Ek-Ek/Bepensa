@@ -34,17 +34,11 @@ use App\Models\Usuario;
 //     return view('welcome');
 // });
 
-Route::get('productos', function(){
-    return view('inventario.productos');
-});
 
 // Route::get('usuarios', function(){
 //     return view('usuarios.usuarios');
 // });
 
-Route::get('proveedores', function(){
-    return view('proveedores.proveedores');
-});
 
 Route::get('inventario_no_retornable', function(){
     return view('inventario.no_retornable');
@@ -72,7 +66,7 @@ Route::get('/', function () {
 
 
 // Login
-Route::post('login', [LoginController::class, 'validar']);
+Route::post('login', [LoginController::class, 'login']);
 
 Route::get('salir', [LoginController::class, 'salir']);
 
@@ -99,22 +93,18 @@ Route::resource('apiCategoria', CategoriaController::class);
 Route::resource('apiTipo', TipoController::class);
 
 // vista de clientes
-Route::get('clientes', [ClienteController::class, 'index']);
 Route::post('crear-cliente', [ClienteController::class, 'store'])->name('nuevo-cliente');
 Route::put('/clientes/{id}', [ClienteController::class, 'update'])->name('actualizar-cliente');
 Route::delete('/clientes/{id}', [ClienteController::class, 'destroy'])->name('eliminar-cliente');
 
 // vista de cfdi
-Route::get('cfdi', [CFDIController::class, 'index']);
 Route::post('crear-cfdi', [CFDIController::class, 'store'])->name('nuevo-cfdi');
 Route::put('/cfdi/{id}', [CFDIController::class, 'update'])->name('actualizar-cfdi');
 Route::delete('/cfdi/{id}', [CFDIController::class, 'destroy'])->name('eliminar-cfdi');
 
 // vista de cobro
-Route::get('cobro', [CobroController::class, 'index'])->name('cobro');
 
 // vista de facturacion
-Route::get('nueva-facturacion', [FacturacionController::class, 'index'])->name('nueva-facturacion');
 Route::post('crear-facturacion', [FacturacionController::class, 'store'])->name('crear-facturacion');
 Route::resource('facturacion', FacturacionController::class);
 Route::get('/buscar-productos', [ProductoController::class, 'buscar']);
@@ -123,11 +113,23 @@ Route::delete('/facturas/{id}', [CobroController::class, 'destroy'])->name('fact
 
 Route::get('/facturas/pdf/{codigo}', [CobroController::class, 'generarPdf'])->name('facturas.pdf');
 
-Route::get('usuarios', [UsuarioController::class,'index']);
+Route::middleware('auth')->group(function () {
+    Route::get('usuarios', [UsuarioController::class,'index'])->name('usuarios.index');
+    Route::get('cobro', [CobroController::class, 'index'])->name('cobro.index');
+    Route::get('nueva-facturacion', [FacturacionController::class, 'index'])->name('nueva-facturacion');
+    Route::get('productos', function(){
+        return view('inventario.productos');
+    });
+    Route::get('proveedores', function(){
+        return view('proveedores.proveedores');
+    });
+    Route::get('clientes', [ClienteController::class, 'index']);
+    Route::get('cfdi', [CFDIController::class, 'index']);
+});
 Route::put('/usuarios/{id}', [UsuarioController::class, 'destroy'])->name('usuarios.eliminar');
 Route::post('/usuarios', [UsuarioController::class, 'store'])->name('usuarios.agregar');
 Route::put('/usuarios-editar/{id}', [UsuarioController::class, 'update'])->name('actualizar-usuario');
 
-Route::get('/correo-estatus', function () {
-    return view('facturacion.factura-correo-estatus');
-});
+// Route::get('/correo-estatus', function () {
+//     return view('facturacion.factura-correo-estatus');
+// });

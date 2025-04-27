@@ -3,75 +3,72 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Usuario;
-use Session;
-use Redirect;
-use Cache;
-use Cookie;
-use Illuminate\Contracts\Session\Session as SessionSession;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use App\Models\Usuario;
+use Illuminate\Support\Facades\Session;
 
 class LoginController extends Controller
 {
-    public function validar(Request $request)
+    /**
+     * Muestra el formulario de login
+     */
+
+
+    /**
+     * Procesa el intento de login
+     */
+    public function login(Request $request)
     {
-        // Validación de los campos de entrada
+        // Validación de campos
         $request->validate([
             'usuario' => 'required|string',
-            'password' => 'required|string'
+            'password' => 'required|string',
         ], [
             'usuario.required' => 'El campo usuario es obligatorio',
             'password.required' => 'El campo contraseña es obligatorio',
         ]);
-    
-        // Buscar el usuario (sin la contraseña primero para evitar timing attacks)
-        $usuario = Usuario::where('usuario', $request->usuario)->where('activo', 1)->first();
-    
-        // Verificar si el usuario existe y la contraseña es correcta
-        if ($usuario && $this->verificarCredenciales($usuario, $request->password)) {
-            // Crear sesión con más datos relevantes
+
+        // Buscar usuario por nombre de usuario
+        $user = Usuario::where('usuario', $request->usuario)->first();
+
+        // Verificar usuario y contraseña
+        if ($user && Hash::check($request->password, $user->password)) {
+            // Autenticar al usuario manualmente
+            Auth::login($user);
             Session::put([
-                'usuario' => $usuario->nombre . ' ' . $usuario->apellidos,
-                'usuario_id' => $usuario->id,
-                'rol' => $usuario->rol,
-                'ultimo_acceso' => now()
+                'usuario' => $user->nombre . ' ' . $user->apellidos,
+                'usuario_id' => $user->id,
+                'rol' => $user->rol,
             ]);
-    
-            // Redirección basada en el rol
-            return $this->redireccionarPorRol($usuario->rol);
+            $request->session()->regenerate();
+
+            // Redirección según el rol
+            switch ($user->rol) {
+                case 'Administrador':
+                    return redirect()->route('usuarios.index');
+                case 'Usuario':
+                    return redirect()->route('cobro.index');
+                default:
+                    return redirect()->intended('/');
+            }
         }
-    
-        // Manejo de credenciales incorrectas
-        return redirect('/')->withErrors([
-            'credenciales' => 'Usuario o contraseña incorrectos'
+
+        // Si la autenticación falla
+        return back()->withErrors([
+            'credenciales' => 'Usuario o contraseña incorrectos',
         ]);
     }
-    protected function verificarCredenciales($usuario, $password)
+
+    /**
+     * Cierra la sesión del usuario
+     */
+    public function salir(Request $request)
     {
-        // Implementación básica (debes usar hash en la práctica)
-        
-        
-        // Implementación recomendada con hash:
-        return Hash::check($password, $usuario->password);
-    }
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
-    protected function redireccionarPorRol($rol)
-{
-    $rutasPorRol = [
-        'Administrador' => 'usuarios',
-        'Usuario' => 'cobro',
-        // Puedes agregar más roles y rutas aquí
-    ];
-
-    return redirect($rutasPorRol[$rol] ?? 'cobro');
-}
-    public function salir(){
-        Session::flush();
-        Session::reflash();
-        Cache::flush();
-        Cookie::forget('laravel_session');
-        unset($_COOKIE);
-        unset($_SESSION);
-        return Redirect::to('/');
+        return redirect('/');
     }
 }

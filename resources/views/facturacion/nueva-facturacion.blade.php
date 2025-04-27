@@ -115,7 +115,7 @@
             <hr>
 
             <div class="modal-footer">
-                <a href="{{ route('cobro') }}" class="btn btn-secondary me-2">Cancelar</a>
+                <a href="{{ url('cobro') }}" class="btn btn-secondary me-2">Cancelar</a>
                 <button type="submit" class="btn btn-success">Guardar Facturación</button>
             </div>
         </form>
