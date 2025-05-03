@@ -24,7 +24,6 @@
       <form id="search-form" class="row g-3" style="gap: 0rem !important;" method="GET" action="{{ url()->current() }}">
         <div class="col-md-4">
             <!-- Envía el parámetro de estatus para hacer 1 sola consulta -->
-            <input type="hidden" name="status" value="{{ request('status') }}">
             <label for="start-date" class="form-label">Fecha de inicio</label>
             <input type="date" id="start-date" name="start_date" class="form-control" 
                   value="{{ request('start_date') }}">
@@ -33,6 +32,17 @@
             <label for="end-date" class="form-label">Fecha de fin</label>
             <input type="date" id="end-date" name="end_date" class="form-control" 
                   value="{{ request('end_date') }}">
+        </div>
+        <div class="col-md-4">
+            <label for="status" class="form-label">Estatus</label>
+            <select name="status" id="status" class="form-control form-select">
+                <option value="" {{ request('status') == '' ? 'selected' : '' }}>TODOS</option>
+                <option value="PENDIENTE" {{ request('status') == 'PENDIENTE' ? 'selected' : '' }}>PENDIENTE</option>
+                <option value="CANCELADO" {{ request('status') == 'CANCELADO' ? 'selected' : '' }}>CANCELADO</option>
+                <option value="PAGADO" {{ request('status') == 'PAGADO' ? 'selected' : '' }}>PAGADO</option>
+            </select>
+        </div>
+        <div class="col-md-8">
         </div>
         <div class="col-md-4 align-self-end">
             <div class="row g-2">
@@ -43,32 +53,13 @@
                 <button type="button" id="clear-btn" class="btn btn-secondary w-100" onclick="window.location.href='{{ url()->current() }}'"
                     @if(!request()->has('start_date') && !request()->has('end_date')) disabled @endif
                 >
-                    Limpiar filtros
+                    Limpiar
                 </button>
                 </div>
             </div>
         </div>
         <div id="validation-message" class="alert alert-warning mt-3 d-none" role="alert"></div>
-    </form>
-    <!-- Formulario para filtros de estatus -->
-    <form id="status-form" class="row g-3" style="gap: 0rem !important;" method="GET" action="{{ url()->current() }}">
-        <div class="col-md-4">
-            <label for="status" class="form-label">Estatus</label>
-            <select name="status" id="status" class="form-control form-select" onchange="this.form.submit()">
-                <option value="" {{ request('status') == '' ? 'selected' : '' }}>TODOS</option>
-                <option value="PENDIENTE" {{ request('status') == 'PENDIENTE' ? 'selected' : '' }}>PENDIENTE</option>
-                <option value="CANCELADO" {{ request('status') == 'CANCELADO' ? 'selected' : '' }}>CANCELADO</option>
-                <option value="PAGADO" {{ request('status') == 'PAGADO' ? 'selected' : '' }}>PAGADO</option>
-            </select>
-            <!-- Envía el parámetro de start_date y end_date para hacer 1 sola consulta -->
-            <input type="hidden" name="start_date" value="{{ request('start_date') }}">
-            <input type="hidden" name="end_date" value="{{ request('end_date') }}">
-        </div>
-        <div class="col-md-4">
-        </div>
-        <div class="col-md-4">
-        </div>
-    </form>
+      </form>
     </div>
 
     <!-- Tabla de facturas -->
@@ -330,6 +321,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     const startDateInput = document.getElementById('start-date');
     const endDateInput = document.getElementById('end-date');
+    const statusInput = document.getElementById('status');
     const submitBtn = document.getElementById('submit-btn');
     const clearBtn = document.getElementById('clear-btn');
     const validationMessage = document.getElementById('validation-message');
@@ -338,22 +330,23 @@ document.addEventListener('DOMContentLoaded', function() {
     function validateDates() {
         const startDate = startDateInput.value;
         const endDate = endDateInput.value;
+        const status = statusInput.value;
         
         // Resetear mensaje y estado del botón
         validationMessage.classList.add('d-none');
         submitBtn.disabled = true;
         
         // Habilitar el botón de limpiar si hay algún cambio en las fechas (incluso si son inválidas)
-        if (startDate || endDate) {
+        if (startDate || endDate || status) {
             clearBtn.disabled = false;
         } else {
             clearBtn.disabled = true;
         }
 
         // Validar si ambos campos están vacíos
-        if (!startDate && !endDate) {
-            return false;
-        }
+        // if (!startDate && !endDate && status) {
+        //     return false;
+        // }
         
         // Validar que la fecha de inicio no sea mayor que la de fin
         if (startDate && endDate) {
@@ -379,6 +372,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Escuchar cambios en los campos de fecha
     startDateInput.addEventListener('change', validateDates);
     endDateInput.addEventListener('change', validateDates);
+    statusInput.addEventListener('change', validateDates);
 
     // Validar al cargar la página si hay valores
     validateDates();

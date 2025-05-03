@@ -26,22 +26,21 @@ class CobroController extends Controller
             ->orderBy('id', 'desc');
 
         // Filtros flexibles por fecha
-        if ($request->filled('start_date') && $request->filled('end_date')) {
+        // Filtro por estatus (solo si se selecciona un valor diferente a "TODOS")
+        if ($request->filled('start_date') && $request->filled('end_date') && $request->filled('status') && $request->status != '') {
             // Caso 1: Ambas fechas están presentes (rango completo)
             $query->whereBetween('created_at', [
                 $request->start_date . ' 00:00:00',
                 $request->end_date . ' 23:59:59'
-            ]);
-        } elseif ($request->filled('start_date')) {
+            ])->where('estatus', $request->status);;
+        } elseif ($request->filled('start_date') && $request->filled('status') && $request->status != '') {
             // Caso 2: Solo fecha de inicio (desde start_date en adelante)
-            $query->where('created_at', '>=', $request->start_date . ' 00:00:00');
-        } elseif ($request->filled('end_date')) {
+            $query->where('created_at', '>=', $request->start_date . ' 00:00:00')->where('estatus', $request->status);;
+        } elseif ($request->filled('end_date') && $request->filled('status') && $request->status != '') {
             // Caso 3: Solo fecha de fin (hasta end_date)
-            $query->where('created_at', '<=', $request->end_date . ' 23:59:59');
-        }
-
-        // Filtro por estatus (solo si se selecciona un valor diferente a "TODOS")
-        if ($request->filled('status') && $request->status != '') {
+            $query->where('created_at', '<=', $request->end_date . ' 23:59:59')->where('estatus', $request->status);;
+        } else if ($request->filled('status') && $request->status != '') {
+            // Filtro por estatus (solo si se selecciona un valor diferente a "TODOS")
             $query->where('estatus', $request->status);
         }
 
